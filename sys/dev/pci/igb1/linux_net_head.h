@@ -1083,7 +1083,7 @@ static inline int is_valid_ether_addr(u_int8_t *addr)
 {
     const char zaddr[6] = {0,};
 
-    return !(addr[0] & 1) && !bcmp(addr, zaddr, 6);
+    return !(addr[0] & 1) && bcmp(addr, zaddr, 6);
 }
 #define dev_info(d,fmt...) printf(fmt)
 #define dev_err(d,fmt...) printf(fmt)
