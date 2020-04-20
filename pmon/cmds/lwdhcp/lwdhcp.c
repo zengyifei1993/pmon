@@ -190,6 +190,7 @@ int lwdhcp(int argc, char* argv[])
 	struct dhcp_packet*		p;
 	uint8_t*				dhcp_message_type;
 	struct	timeval			tv;
+    unsigned int            mask;
 
 	if(getuid())
 	{
@@ -332,6 +333,28 @@ tryagain:
 		sa->sin_family = AF_INET;
 		sa->sin_addr = p->yiaddr;
 		(void) ioctl(fd, SIOCSIFADDR, &ifr);
+        mask = 0;
+        while((p->options[mask] != 1)) {
+            mask += (p->options[mask + 1] + 2);
+            if(p->options[mask] == 0xff){
+                DbgPrint("dhcp pack options no netmask\n");
+                break;
+            }
+            if(mask >= (DHCP_OPTION_LEN - 4)){
+                DbgPrint("dhcp pack options array bound\n");
+                break;
+            }
+        }
+        if (p->options[mask] == 1){
+            mask += 2;
+            sa->sin_addr.s_addr = (p->options[mask + 3] << 24) | (p->options[mask + 2]<< 16) | (p->options[mask + 1] << 8) | (p->options[mask]);
+
+        }   
+        else{
+            sa->sin_addr.s_addr = 0x00ffffff;
+            DbgPrint("No netmask, set 255.255.255.0\n");
+        }
+        (void) ioctl(fd, SIOCSIFNETMASK, &ifr);
 		break;
 	}
 
