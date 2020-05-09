@@ -601,11 +601,59 @@ void tgt_poweroff()
 	readl(LS7A_ACPI_PM1_STS_REG) &= 0xffffffff;
 	readl(LS7A_ACPI_PM1_CNT_REG) = 0x3c00;
 }
+
+static int ls7a_rtc_wakeup_reboot(int delay);
+
 void tgt_reboot(void)
 {
+#ifdef LS7A_RTC_WAKEUP_REBOOT
+	init_legacy_rtc();
+	ls7a_rtc_wakeup_reboot(LS7A_RTC_WAKEUP_REBOOT);
+#else
 	readl(LS7A_ACPI_RST_CNT_REG) = 1;
+#endif
 }
 
+#ifdef LS7A_RTC_WAKEUP_REBOOT
+static int acpi_suspend()
+{
+#define GPE0_EN  (LS7A_ACPI_REG_BASE+0x2c)
+#define GPE0_STS (LS7A_ACPI_REG_BASE+0x28)
+#define PM1_STS  (LS7A_ACPI_REG_BASE+0xc)
+#define PM1_CNT  (LS7A_ACPI_REG_BASE+0x14)
+#define PM1_EN  (LS7A_ACPI_REG_BASE+0x10)
+#define PMCON_RESUME  (LS7A_ACPI_REG_BASE+0x4)
+
+readl(GPE0_EN) = 0xfd70;
+readl(GPE0_STS) = 0x0000ffff;
+readl(PM1_STS) = 0x0000ffff;
+readl(PMCON_RESUME) |= 0x2880;
+readl(PM1_EN) |= 0x400;
+readl(PM1_CNT) = 0x00003400;
+}
+
+static int ls7a_rtc_alarmset(struct tm *tm)
+{
+	int rtc_reg = 0xb00d0100;
+	int c = readl(rtc_reg+0x40);
+	if ((c&0x2900)!=0x2900) readl(rtc_reg+0x40) = 0x2900;
+
+	readl(rtc_reg+0x34) = ((tm->tm_year&0x3f)<<26)|((tm->tm_mon + 1)<<22)|(tm->tm_mday<<17) \
+			      |(tm->tm_hour<<12)|(tm->tm_min<<6)|(tm->tm_sec<<0);
+	return 0;
+}
+
+static int ls7a_rtc_wakeup_reboot(int delay)
+{
+	struct tm *tm;
+	time_t t = tgt_gettime();
+	t += delay;
+	tm = gmtime(&t);
+	ls7a_rtc_alarmset(tm);
+	acpi_suspend();
+	return 0;
+}
+#endif
 
 /*
  *  This function makes inital HW setup for debugger and
@@ -886,8 +934,6 @@ time_t tgt_gettime()
 		tm.tm_mday = (val >> 21) & 0x1f;
 		tm.tm_mon = ((val >> 26) & 0x3f) - 1;
 		tm.tm_year = inl(LS7A_TOY_READ1_REG);
-		if (tm.tm_year < 50)
-			tm.tm_year += 100;
 		tm.tm_isdst = tm.tm_gmtoff = 0;
 		t = gmmktime(&tm);
 	} else
