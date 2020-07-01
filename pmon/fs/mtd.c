@@ -354,8 +354,8 @@ static int cmd_flash_erase(int argc,char **argv)
     priv = (mtdpriv*)_file[fp].data;
     p = priv->file;
     mtd = p->mtd;
-    start = (p->part_offset)&~(mtd->erasesize-1);
-    end = ((p->part_offset + p->part_size)&~(mtd->erasesize-1)) - mtd->erasesize;
+    start = (p->part_offset + priv->open_offset)&~(mtd->erasesize-1);
+    end = ((p->part_offset + priv->open_offset + priv->open_size_real)&~(mtd->erasesize-1));
     erase.mtd = mtd;
     erase.callback=0;
     erase.priv = 0;
