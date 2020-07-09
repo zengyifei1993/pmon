@@ -71,6 +71,7 @@
 #endif
 
 #include "boot_cfg.h"
+#include "initrd.h"
 
 Menu_Item menu_items[MAXARGS];//Storage All menu information.
 int menus_num = 0;
@@ -584,7 +585,7 @@ int load_initrd_from_menu(Menu_Item* pItem)
 		printf("%s\n",cmd);
 #endif
 //		stat=do_cmd(cmd);
-		stat = boot_initrd(cmd, 0x84000000,0);
+		stat = boot_initrd(cmd, INITRD_ADDR, 0);
 #ifdef MENU_DEBUG
 		printf("Load initrd return %d\n",stat);
 #endif

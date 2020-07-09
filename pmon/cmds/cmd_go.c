@@ -154,7 +154,7 @@ extern char	*optarg;
 	if (initrd_execed())
 	{
 		char buf[30];
-		sprintf(buf, "rd_start=0x%x rd_size=0x%x ", 
+		sprintf(buf, "rd_start=0x%llx rd_size=0x%x ", 
 			get_initrd_start(), get_initrd_size());
 		strcat(clientcmd, buf);
 	}
