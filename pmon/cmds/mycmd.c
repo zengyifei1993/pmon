@@ -1452,22 +1452,12 @@ int highmemcpy(long long dst,long long src,long long count)
 {
 #if __mips >= 3
 asm(
-".set noreorder\n"
-"ld $3,%0\n"
-"ld $4,%1\n"
-"1:\n"
-"beqz %2,2f\n"
-"nop\n"
-"lb $2,($3)\n"
-"sb $2,($4)\n"
-"daddiu $3,1\n"
-"daddiu $4,1\n"
-"b 1b\n"
-"daddiu %2,-1\n"
-"2:\n"
-".set reorder\n"
-::"m"(src),"m"(dst),"r"(count)
-:"$2","$3","$4"
+"ld $4,%0\n"
+"ld $5,%1\n"
+"ld $6,%2\n"
+"jal memcpy\n"
+::"m"(dst),"m"(src),"m"(count)
+:"$2","$4","$5","$6","$31"
 );
 #else
  memcpy(dst,src,count);
