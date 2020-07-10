@@ -2221,21 +2221,21 @@ get_burst_length: //save in t9
 	dli		t4, 0x1c
 	and		s3, s3, t4
 	and		t6, t6, t4
-	dsrl	s3, s3, 0x2
-	dsrl	t6, t6, 0x2
+	dsrl		s3, s3, 0x2
+	dsrl		t6, t6, 0x2
 	blt		s3, 0x4, 1f
 	nop
 	or		t6, t6, 0x8
 1:
-	dsubu	t6, t6, s3
+	dsubu		t6, t6, s3
 	beq		t6, t9, glvl_last_check_end
 	nop
 	
 	lb		a0, 0x7(t1)
-	dsubu	a0, a0, 0x1
+	dsubu		a0, a0, 0x1
 	sb		a0, 0x7(t1)
 	lb		a0,	0x6(t1)
-	dsubu	a0, a0, 0x1
+	dsubu		a0, a0, 0x1
 	sb		a0, 0x6(t1)
 	RDOE_ADD_TRDDATA_SUB
 	PRINTSTR("\r\nThe edges number is incorrect!\r\n")

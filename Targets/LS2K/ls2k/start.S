@@ -627,6 +627,14 @@ cp0_main:
 
 
 	dli	t0, 0x900000fe00006800
+
+	lw	t1, 0x78(t0)
+	li	t2, ~(0x7 << 12)
+	and	t1, t1, t2
+	li	t2, 0x1000
+	or	t1, t1, t2
+	sw	t1, 0x78(t0)
+
 	li	t1, 0x10000000
 	sw	t1, 0x10(t0)
 
@@ -662,6 +670,14 @@ cp0_main:
     sw  t2, 0x0(t0)
 
 	dli	t0, 0x900000fe00007000
+
+	lw	t1, 0x78(t0)
+	li	t2, ~(0x7 << 12)
+	and	t1, t1, t2
+	li	t2, 0x1000
+	or	t1, t1, t2
+	sw	t1, 0x78(t0)
+
 	li	t1, 0x10100000
 	sw	t1, 0x10(t0)
 
@@ -697,6 +713,14 @@ cp0_main:
     sw  t2, 0x0(t0)
 
 	dli	t0, 0x900000fe00004800
+
+	lw	t1, 0x78(t0)
+	li	t2, ~(0x7 << 12)
+	and	t1, t1, t2
+	li	t2, 0x1000
+	or	t1, t1, t2
+	sw	t1, 0x78(t0)
+
 	li	t1, 0x11000000
 	sw	t1, 0x10(t0)
 
@@ -732,6 +756,14 @@ cp0_main:
     sw  t2, 0x0(t0)
 
 	dli	t0, 0x900000fe00005000
+
+	lw	t1, 0x78(t0)
+	li	t2, ~(0x7 << 12)
+	and	t1, t1, t2
+	li	t2, 0x1000
+	or	t1, t1, t2
+	sw	t1, 0x78(t0)
+
 	li	t1, 0x11100000
 	sw	t1, 0x10(t0)
 
@@ -761,6 +793,14 @@ cp0_main:
 	sw	t1, 0x0(t0)
 
 	dli	t0, 0x900000fe00005800
+
+	lw	t1, 0x78(t0)
+	li	t2, ~(0x7 << 12)
+	and	t1, t1, t2
+	li	t2, 0x1000
+	or	t1, t1, t2
+	sw	t1, 0x78(t0)
+
 	li	t1, 0x11200000
 	sw	t1, 0x10(t0)
 
@@ -790,6 +830,14 @@ cp0_main:
 	sw	t1, 0x0(t0)
 
 	dli	t0, 0x900000fe00006000
+
+	lw	t1, 0x78(t0)
+	li	t2, ~(0x7 << 12)
+	and	t1, t1, t2
+	li	t2, 0x1000
+	or	t1, t1, t2
+	sw	t1, 0x78(t0)
+
 	li	t1, 0x11300000
 	sw	t1, 0x10(t0)
 

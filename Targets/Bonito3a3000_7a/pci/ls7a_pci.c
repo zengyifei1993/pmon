@@ -109,6 +109,29 @@ u32 _pci_conf_readn(device_t tag, int reg, int width)
 	}
 
 	if (bus == 0) {
+		if (reg == 0x78) {
+			val_raw = pci_read_type0_config32(device, function, reg);
+			if (ls7a_version ()) {
+				unsigned int tmp = val_raw;
+				val_raw &= ~0x7000;
+				/*set brige mrrs to 128*/
+				if (device == 9 || device == 10 || device == 14 || device == 16 || device == 18 || device == 20)
+					val_raw |= 0x1000; //256
+				else if (device == 11 || device == 12)
+					val_raw |= 0x5000; //4k
+				else if (device == 13 || device == 15 || device == 17 || device == 19)
+					val_raw |= 0x3000; //1k
+				else
+					return tmp;
+				//printf("val_raw 0x%x \n",val_raw);
+			} else {
+				val_raw &= ~0x7000;
+				/*set mrrs same with mps so mps must be setted*/
+				val_raw |= (val_raw & 0xe0) << 7;
+				//printf("val_raw 0x%x \n",val_raw);
+			}
+			return val_raw;
+		}
 		/* Type 0 configuration on onboard PCI bus */
 		return pci_read_type0_config32(device, function, reg);
 	} else {

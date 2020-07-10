@@ -1156,6 +1156,7 @@ simple_test_mem:
 
 	TM_PRINTSTR("\r\nStart simple test mem...\r\n")
     //set Test Base t1 and Test Limit t3
+    //dli     t1, SIMPLE_TM_BASE
     dli     t1, SIMPLE_TM_BASE
     GET_TM_NODE_ID_a1
     dsll    a1, a1, 44
