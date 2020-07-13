@@ -1481,13 +1481,14 @@ asm(
 "1:\n"
 "beqz %2,2f\n"
 "nop\n"
-"sb %1,(%0)\n"
-"daddiu %0,1\n"
+"ld $2,%0;\n"
+"sb %1,($2)\n"
+"daddiu $2,1\n"
 "b 1b\n"
 "daddiu %2,-1\n"
 "2:\n"
 ".set reorder\n"
-::"r"(addr),"r"(c),"r"(count)
+::"m"(addr),"r"(c),"r"(count)
 :"$2"
 );
 #else
