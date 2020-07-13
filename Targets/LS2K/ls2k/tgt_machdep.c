@@ -2000,15 +2000,15 @@ void ls_set_io_noncoherent(void)
 		u64 val;
 
 		val = __raw__readq(0x900000001fe10420);
-		val &= 0xffffff8fffffffeULL; //pcie, usb, hda, gmac
+		val &= 0xfffffff8fffffffeULL; //pcie, usb, hda, gmac
 		__raw__writeq(0x900000001fe10420 , val);
 
 		val = __raw__readq(0x900000001fe10430);
-		val &= 0xffffffffffffff3ULL; //dc, gpu
+		val &= 0xfffffffffffffff3ULL; //dc, gpu
 		__raw__writeq(0x900000001fe10430 , val);
 
 		val = __raw__readq(0x900000001fe10450);
-		val &= 0xffffffffffffbffULL; //sata
+		val &= 0xfffffffffffffbffULL; //sata
 		__raw__writeq(0x900000001fe10450 , val);
 
 		val = __raw__readq(0x900000001fe10c00);
