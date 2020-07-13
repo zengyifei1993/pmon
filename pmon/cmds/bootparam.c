@@ -383,13 +383,18 @@ struct system_loongson *init_system_loongson()
 #ifdef LOONGSON3A4000
   s->nr_uarts = 1;
   s->uarts[0].iotype = 2; //UPIO_MEM
+  s->uarts[1].iotype = 2; //UPIO_MEM
 #ifdef BONITO_100M
   s->uarts[0].uartclk = 100000000; //100M clk
+  s->uarts[1].uartclk = 100000000; //100M clk
 #else 
   s->uarts[0].uartclk = 25000000; //25M clk
+  s->uarts[1].uartclk = 25000000; //25M clk
 #endif
   s->uarts[0].int_offset = 2; //56 + 2
   s->uarts[0].uart_base = 0x1fe001e0; //uart 0
+  s->uarts[1].int_offset = 1; //56 + 2
+  s->uarts[1].uart_base = 0x1fe001e8; //uart 0
 #endif
 
   return s;
