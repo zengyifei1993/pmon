@@ -15,19 +15,21 @@
 #ifdef __mips__
 #include <machine/cpu.h>
 #endif
+#include "initrd.h"
 
 
+int boot_initrd(const char* path, long long rdstart,int flags);
 int cmd_initrd (int ac, char *av[])
 {
 	int flags = 0;
 	int ret;
-	unsigned int rd_start;
+	unsigned long long rd_start;
 	
 	if (ac != 2 && ac!=3)
 		return -1;
 
-	if(ac==3)rd_start=strtoul(av[2],0,0);
-	else rd_start = 0x84000000;
+	if(ac==3)rd_start=strtoull(av[2],0,0);
+	else rd_start = INITRD_ADDR;
 
 	flags |= RFLAG;
 

@@ -44,7 +44,7 @@ int boot_kernel(const char* path, int flags, void* flashaddr, unsigned int offse
 	int	bootfd;
 	int	bootbigend;
 
-	char buf[DLREC+1];
+	char buf[2048];
 	long ep;
 	int n;
 #ifdef HAVE_FLASH
@@ -134,11 +134,12 @@ int boot_kernel(const char* path, int flags, void* flashaddr, unsigned int offse
    	return 0;
 }
 
-static	unsigned int rd_start;
+static	unsigned long long rd_start;
 static	unsigned int rd_size;
 static	int execed;
+extern unsigned long long dl_loffset;
 
-int boot_initrd(const char* path, int rdstart,int flags)
+int boot_initrd(const char* path, long long rdstart,int flags)
 {
 	char buf[DLREC+1] = {0};
 	int bootfd;
@@ -147,6 +148,11 @@ int boot_initrd(const char* path, int rdstart,int flags)
 	
 	rd_start = rdstart;
 	rd_size = 0;
+
+	if (rd_start < 0xffffffff80000000ULL) {
+		flags |=OFLAG;
+		dl_loffset =  rd_start;
+	}
 	
 	printf("Loading initrd image %s", path);
 	
@@ -178,7 +184,7 @@ int initrd_execed(void)
 	return execed;
 }
 
-unsigned int get_initrd_start(void)
+unsigned long long get_initrd_start(void)
 {
 	return 	rd_start;
 }
