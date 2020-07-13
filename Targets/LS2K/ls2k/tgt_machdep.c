@@ -866,11 +866,31 @@ read_ddrfreq()
         return (hw_freq);
 }
 
+/*
+ls2k RTC_TOY_READ1/0x1fe07830 read result will or RST_CNT/0x1fe07030 read result.
+ls7a RTC_TOY_READ1/0x100d0130 read result will or RST_CNT/0x100d0030 read result.
+so we need write RST_CNT/0x1fe07030 to 0 before read RTC_TOY_READ1/0x1fe07830.
+we feed dog if wdt_en, because another core may feed dog when we set RST_CNT/0x1fe07030 to 0.
+*/
+#define RST_WDTEN 2
+#ifdef LOONGSON_2K
+#define RTS_CNT_OFFSET 0x800
+#else
+#define RTS_CNT_OFFSET 0x100
+#endif
 static time_t ls2k_rtc_gettime()
 {
 	struct tm tm;
 	time_t t;
 	unsigned int val;
+	unsigned int  rst_ctrl = inl(LS2H_TOY_READ1_REG - RTS_CNT_OFFSET);
+	if (rst_ctrl & RST_WDTEN)
+		outl(LS2H_TOY_READ1_REG - RTS_CNT_OFFSET, 0);
+	tm.tm_year = inl(LS2H_TOY_READ1_REG);
+	if (rst_ctrl & RST_WDTEN) {
+		outl(LS2H_TOY_READ1_REG - RTS_CNT_OFFSET, rst_ctrl);
+		outl(LS2H_TOY_READ1_REG - RTS_CNT_OFFSET + 4, 1);
+	}
 
 	val = inl(LS2H_TOY_READ0_REG);
 	tm.tm_sec = (val >> 4) & 0x3f;
@@ -878,7 +898,6 @@ static time_t ls2k_rtc_gettime()
 	tm.tm_hour = (val >> 16) & 0x1f;
 	tm.tm_mday = (val >> 21) & 0x1f;
 	tm.tm_mon = ((val >> 26) & 0x3f) - 1;
-	tm.tm_year = inl(LS2H_TOY_READ1_REG);
 	tm.tm_isdst = tm.tm_gmtoff = 0;
 	t = gmmktime(&tm);
 	return (t);
