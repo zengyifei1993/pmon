@@ -476,6 +476,8 @@ mc_reset:
     dli     a0, 0x33
     beq     a0, a1, 6f
     nop
+    beq	    a1, 0x2, 7f
+    nop
     PRINTSTR("\r\nError: The CS MAP is not supported!!!!!!!")
 10:
     b       10b
@@ -622,6 +624,13 @@ mc_reset:
     sw      a0, DDR4_WRODT_MAP_OFFSET(t8)
     b       9f
     nop
+7:
+    dli     a0, 0x1
+    sw      a0, DDR4_CS_MAP_OFFSET(t8)
+    dli     a0, 0x2
+    sw      a0, DDR4_CKE_MAP_OFFSET(t8)
+    dli     a0, 0x2
+    sw      a0, DDR4_WRODT_MAP_OFFSET(t8)
 9:
 
 //set lvl_cs
@@ -635,6 +644,8 @@ mc_reset:
     nop
     dli     a0, 0x10
     beq     a0, a1, 1f
+    nop
+    beq	    a1, 0x2, 1f
     nop
     dli     a0, 0x11
     beq     a0, a1, 2f
