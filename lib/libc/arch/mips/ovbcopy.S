@@ -3,6 +3,14 @@
 #define	ABICALLS			# NO ABICALLS
 #include <asm.h>
 
+#if __mips == 3 || __mips == 64
+#define move(r1,r2) daddu r1, r2, $0
+#define addu daddu
+#define addiu daddiu
+#define subu dsubu
+#else
+#define move(r1,r2) addu r1, r2, $0
+#endif
 
 /*
  * memcpy(to, from, len)
@@ -10,9 +18,9 @@
  */
 LEAF(memcpy)
 	.set	noreorder
-	move	v0, a0			# swap from and to
-	move	a0, a1
-	move	a1, v0
+	move(v0,a0)			# swap from and to
+	move(a0,a1)
+	move(a1,v0)
 ALEAF(bcopy)
 ALEAF(ovbcopy)
 #ifdef GODSONEV1
@@ -77,7 +85,7 @@ forward:
 1:
 	and	v1, a2, 3		# compute number of words left
 	subu	a3, a2, v1
-	move	a2, v1
+	move(a2,v1)
 	addu	a3, a3, a0		# compute ending address
 2:
 	LWHI	v1, 0(a0)		# copy words a0 unaligned, a1 aligned
@@ -99,7 +107,7 @@ aligned:
 1:
 	and	v1, a2, 3		# compute number of whole words left
 	subu	a3, a2, v1
-	move	a2, v1
+	move(a2,v1)
 	addu	a3, a3, a0		# compute ending address
 2:
 	lw	v1, 0(a0)		# copy words
