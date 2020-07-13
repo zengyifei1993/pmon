@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  */
-#define DLREC	550		/* max download record size */
+#define DLREC	2048		/* max download record size */
 
 #define SFLAG 0x0001		/* Don't clear symbols */
 #define BFLAG 0x0002		/* Don't clear breakpoints */

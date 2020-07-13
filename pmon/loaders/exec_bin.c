@@ -69,7 +69,9 @@ static long
 	do {
 	if(flags&OFLAG)
 	{
+		size = DLREC;
 		n2 = read (fd, buf, size);
+		if (n2 > 0)
 		highmemcpy(addr,(long long)buf,n2);
 	}
 	else n2 = read (fd, addr, size);
