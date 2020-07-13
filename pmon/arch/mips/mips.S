@@ -82,6 +82,7 @@ retvalue:
  *  Exception trampoline copied down to RAM after initialization.
  */
 	.text
+	.set mips3
 	.globl	MipsException
 	.globl	MipsExceptionEnd
 MipsException:
@@ -172,10 +173,7 @@ exp_out:
 	LOAD	k0, K0 * RSIZE(k0)
 
 	.set	at
-	.set push
-	.set mips3
 	eret
-	.set pop
 END(_go)
 
 /*
