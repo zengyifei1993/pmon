@@ -372,6 +372,7 @@ static int cmd_flash_erase(int argc,char **argv)
             printf("\b\b\b\b\b\b\b\b\b\b%08x  ",start);
             start += mtd->erasesize;
         }
+	 chip->pagebuf = -1;
     }else{
         while(start<end){
             erase.addr = start;
