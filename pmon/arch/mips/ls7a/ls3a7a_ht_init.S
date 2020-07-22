@@ -226,17 +226,12 @@ ls3a7a_ht_init:
     sw      a0, 0x50(t0)
 #endif
 
-    TTYDBG("Set 3A HT int, using 8 bit int.\r\n")
+    TTYDBG("Set 3A4000 HT int, using 8 bit int.\r\n")
 #ifdef LOONGSON3A4000
     lw      a0, 0x1c4(t0)
     li      a1, 0x00000400
     or      a0, a1, a0
     sw      a0, 0x1c4(t0)
-#else
-    lw      a0, 0x58(t0)
-    li      a1, 0x00000400
-    or      a0, a1, a0
-    sw      a0, 0x58(t0)
 #endif
 
 #ifdef LOONGSON3A4000
