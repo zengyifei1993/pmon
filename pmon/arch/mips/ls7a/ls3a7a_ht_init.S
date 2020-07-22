@@ -174,8 +174,8 @@ ls3a7a_ht_init:
 
 #else
     //related to system chip number, not the 3A - 7A connection
-    //recover node 1 access address (bit 37: node id)
-    li      a0, 0x2000e000
+    //recover node 1 access address (bit 38: node id)
+    li      a0, 0x4000c000
     sw      a0, (LS3A_HT_RX_CACHE_WIN3_OFFSET+4)(t0)
     li      a0, 0xc0100000
     sw      a0, (LS3A_HT_RX_CACHE_WIN3_OFFSET+0)(t0)
