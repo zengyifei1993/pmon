@@ -459,7 +459,7 @@ int spi_erase_area(unsigned int saddr,unsigned int eaddr,unsigned sectorsize)
          * 0x52 erase 32kbyte of memory array
          * 0xd8 erase 64kbyte of memory array                                                                                                           
          */
-	SET_SPI(TXFIFO,0x20);
+	SET_SPI(TXFIFO,(sectorsize==0x1000?0x20:((sectorsize==0x8000)?0x52:0xd8)));
        	while((GET_SPI(SPSR))&RFEMPTY);
 	GET_SPI(RXFIFO);
 	SET_SPI(TXFIFO,addr >> 16);
@@ -544,7 +544,7 @@ int spi_read_area(int flashaddr,char *buffer,int size)
 struct fl_device myflash = {
 	.fl_name="spiflash",
 	.fl_size=0x100000,
-	.fl_secsize=0x10000,
+	.fl_secsize=FLASH_SECTOR_SIZE,
 };
 
 struct fl_device *fl_devident(void *base, struct fl_map **m)
@@ -572,7 +572,7 @@ int fl_erase_device(void *fl_base, int size, int verbose)
 	int off;
 	map = fl_find_map(fl_base);
 	off = (int)(fl_base - map->fl_map_base) + map->fl_map_offset;
-	spi_erase_area(off,off+size,0x1000);
+	spi_erase_area(off,off+size, myflash.fl_secsize);
 	spi_initr();
 return 0;
 }

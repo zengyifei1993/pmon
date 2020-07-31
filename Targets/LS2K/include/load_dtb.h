@@ -25,7 +25,7 @@ normal:	|-----bfc00000---|	dtb:	|-----bfc00000---|
 #include <ctype.h>
 
 #define	DTB_SIZE 0x4000		/* 16K dtb size*/
-#define	DTB_OFFS		(NVRAM_OFFS - DTB_SIZE)
+#define	DTB_OFFS		((NVRAM_OFFS - DTB_SIZE) & ~(FLASH_SECTOR_SIZE - 1))
 
 #define MAX_LEVEL	32		/* how deeply nested we will go */
 #define SCRATCHPAD      1024            /* bytes of scratchpad memory */
