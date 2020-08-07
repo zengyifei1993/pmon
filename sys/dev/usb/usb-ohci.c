@@ -503,6 +503,8 @@ static void lohci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	ohci->pa.pa_id = -1;
+
 	usb_ohci_dev[ohci_dev_index++] = ohci;
 	ohci_index++;
 	ohci->sc_sh = cf->ca_baseaddr;
@@ -3732,15 +3734,13 @@ void usb_ohci_stop_one(ohci_t * ohci)
 	writel(0, &ohci->regs->control);
 	writel(OHCI_HCR, &ohci->regs->cmdstatus);
 	(void)readl(&ohci->regs->cmdstatus);
+	delay(10);
 
-#if (defined LOONGSON_3A2H) || (defined LOONGSON_3C2H) || defined (LOONGSON_2K)
-	cmd = readl(&ohci->regs->control);
-	cmd &= (~0x7);
-	writel(cmd, ohci->regs->control);
-#endif
 #if !defined (LOONGSON_2K)
-	cmd = pci_conf_read(ohci->sc_pc, ohci->pa.pa_tag, 0x04);
-	pci_conf_write(ohci->sc_pc, ohci->pa.pa_tag, 0x04, (cmd & ~0x7));
+	if(ohci->pa.pa_id != -1) {
+		cmd = pci_conf_read(ohci->sc_pc, ohci->pa.pa_tag, 0x04);
+		pci_conf_write(ohci->sc_pc, ohci->pa.pa_tag, 0x04, (cmd & ~0x7));
+	}
 #endif
 }
 
