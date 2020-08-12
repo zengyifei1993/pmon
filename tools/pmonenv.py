@@ -52,7 +52,7 @@ def writehexenv(fname,hexbin):
       f.write(v.decode('hex'))
     f.close()
 
-def writedtb(fname,dtb,foff):
+def writedtb(fname,dtb,dtboff):
     f=open(dtb,'rb')
     a=f.read();
     f.close()
@@ -61,22 +61,23 @@ def writedtb(fname,dtb,foff):
     a=b+a+b
     
     f=open(fname,'rb+')
-    f.seek(foff-0x4000,0)
+    f.seek(dtboff,0)
     f.write(a)
     f.close()
     
 if __name__ == '__main__':
-    opt,argv=getopt.getopt(sys.argv[1:],'b:o:s:f:wd:')
+    opt,argv=getopt.getopt(sys.argv[1:],'b:o:O:s:f:wd:')
     opt=dict(opt)
-    foff = int(opt['-o'],0) if '-o' in opt  else 0x000ff000
+    foff = int(opt['-o'],0) if '-o' in opt  else 0x000f0000
     fsz = int(opt['-s'],0) if '-s' in opt else 500
     fname = opt['-f'] if '-f' in opt else 'gzrom.bin'
+    dtboff = int(opt['-O'],0) if '-O' in opt  else foff-0x4000
     
     d=readenv(fname,foff,fsz,argv)
     print(d)
     if '-w' in opt:
      writeenv(fname,foff,fsz,d)
      if '-b' in opt: writehexenv(fname, opt['-b'])
-     if '-d' in opt: writedtb(fname, opt['-d'], foff)
+     if '-d' in opt: writedtb(fname, opt['-d'], dtboff)
            
 
