@@ -386,6 +386,17 @@ file sys/dev/usb/usb-ohci.c		  mod_usb_ohci needs-flag
 file sys/dev/usb/usb_kbd.c		  mod_usb_kbd & mod_usb	needs-flag
 file sys/dev/usb/cmd_usb.c		  mod_usb & mod_usb_storage
 
+define xhcibus {}
+
+device  xhci : usbbus
+attach  xhci at xhcibus
+
+file sys/dev/usb/xhci.c		  mod_usb_xhci needs-flag	
+file sys/dev/usb/xhci-mem.c	  mod_usb_xhci needs-flag	
+file sys/dev/usb/xhci-ring.c	  mod_usb_xhci needs-flag	
+file sys/dev/usb/xhci-dwc3.c	  mod_usb_xhci needs-flag	
+
+
 file sys/dev/usb/usb_uhci.c		  mod_usb_uhci	needs-flag
 file sys/dev/pci/smi712.c		  mod_smi712 needs-flag
 file sys/dev/pci/sm502.c		  mod_smi502 needs-flag

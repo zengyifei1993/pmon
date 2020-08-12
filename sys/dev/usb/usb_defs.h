@@ -65,6 +65,7 @@
 #define US_PR_BULK             0x50		/* bulk only */
 
 /* USB types */
+#define USB_TYPE_MASK			(0x03 << 5)
 #define USB_TYPE_STANDARD   (0x00 << 5)
 #define USB_TYPE_CLASS      (0x01 << 5)
 #define USB_TYPE_VENDOR     (0x02 << 5)
@@ -80,6 +81,24 @@
 #define USB_DIR_OUT           0
 #define USB_DIR_IN            0x80
 
+/*
+ * bmRequestType: USB Device Requests, table 9.2 USB 2.0 spec.
+ * (shifted) direction/type/recipient.
+ */
+#define DeviceRequest \
+	((USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_DEVICE) << 8)
+
+#define DeviceOutRequest \
+	((USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_DEVICE) << 8)
+
+#define InterfaceRequest \
+	((USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_INTERFACE) << 8)
+
+#define EndpointRequest \
+	((USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_INTERFACE) << 8)
+
+#define EndpointOutRequest \
+	((USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_INTERFACE) << 8)
 /* Descriptor types */
 #define USB_DT_DEVICE        0x01
 #define USB_DT_CONFIG        0x02
@@ -91,6 +110,7 @@
 #define USB_DT_REPORT       (USB_TYPE_CLASS | 0x02)
 #define USB_DT_PHYSICAL     (USB_TYPE_CLASS | 0x03)
 #define USB_DT_HUB          (USB_TYPE_CLASS | 0x09)
+#define USB_DT_SS_HUB       (USB_TYPE_CLASS | 0x0a)
 
 /* Descriptor sizes per descriptor type */
 #define USB_DT_DEVICE_SIZE      18
@@ -101,6 +121,12 @@
 #define USB_DT_HUB_NONVAR_SIZE  7
 #define USB_DT_HID_SIZE         9
 
+#define USB_ENDPOINT_MAXP_MASK		0x07ff
+#define USB_EP_MAXP_MULT_SHIFT		11
+#define USB_EP_MAXP_MULT_MASK		(3 << USB_EP_MAXP_MULT_SHIFT)
+#define USB_EP_MAXP_MULT(m)		\
+	(((m) & USB_EP_MAXP_MULT_MASK) >> USB_EP_MAXP_MULT_SHIFT)
+#define USB_ENDPOINT_INTRTYPE		0x30
 /* Endpoints */
 #define USB_ENDPOINT_NUMBER_MASK  0x0f	/* in bEndpointAddress */
 #define USB_ENDPOINT_DIR_MASK     0x80
@@ -150,6 +176,17 @@
 #define USB_REQ_SET_IDLE            0x0A
 #define USB_REQ_SET_PROTOCOL        0x0B
 
+/* Device features */
+#define USB_FEAT_HALT               0x00
+#define USB_FEAT_WAKEUP             0x01
+#define USB_FEAT_TEST               0x02
+
+/* Test modes */
+#define USB_TEST_MODE_J             0x01
+#define USB_TEST_MODE_K             0x02
+#define USB_TEST_MODE_SE0_NAK       0x03
+#define USB_TEST_MODE_PACKET        0x04
+#define USB_TEST_MODE_FORCE_ENABLE  0x05
 
 /* "pipe" definitions */
 
@@ -163,6 +200,15 @@
 #define USB_INTERRUPT      1
 #define USB_CONTROL        2
 #define USB_BULK           3
+
+#define USB_PIPE_TYPE_SHIFT	30
+#define USB_PIPE_TYPE_MASK	(3 << USB_PIPE_TYPE_SHIFT)
+
+#define USB_PIPE_DEV_SHIFT	8
+#define USB_PIPE_DEV_MASK	(0x7f << USB_PIPE_DEV_SHIFT)
+
+#define USB_PIPE_EP_SHIFT	15
+#define USB_PIPE_EP_MASK	(0xf << USB_PIPE_EP_SHIFT)
 
 /* USB-status codes: */
 #define USB_ST_ACTIVE           0x1		/* TD is active */
@@ -203,11 +249,24 @@
 #define USB_PORT_FEAT_RESET          4
 #define USB_PORT_FEAT_POWER          8
 #define USB_PORT_FEAT_LOWSPEED       9
+#define USB_PORT_FEAT_HIGHSPEED      10
 #define USB_PORT_FEAT_C_CONNECTION   16
 #define USB_PORT_FEAT_C_ENABLE       17
 #define USB_PORT_FEAT_C_SUSPEND      18
 #define USB_PORT_FEAT_C_OVER_CURRENT 19
 #define USB_PORT_FEAT_C_RESET        20
+#define USB_PORT_FEAT_TEST           21
+
+/*
+ * Changes to Port feature numbers for Super speed,
+ * from USB 3.0 spec Table 10-8
+ */
+#define USB_SS_PORT_FEAT_U1_TIMEOUT	23
+#define USB_SS_PORT_FEAT_U2_TIMEOUT	24
+#define USB_SS_PORT_FEAT_C_LINK_STATE	25
+#define USB_SS_PORT_FEAT_C_CONFIG_ERROR	26
+#define USB_SS_PORT_FEAT_BH_RESET	28
+#define USB_SS_PORT_FEAT_C_BH_RESET	29
 
 /* wPortStatus bits */
 #define USB_PORT_STAT_CONNECTION    0x0001
@@ -217,6 +276,24 @@
 #define USB_PORT_STAT_RESET         0x0010
 #define USB_PORT_STAT_POWER         0x0100
 #define USB_PORT_STAT_LOW_SPEED     0x0200
+#define USB_PORT_STAT_HIGH_SPEED    0x0400	/* support for EHCI */
+#define USB_PORT_STAT_SUPER_SPEED   0x0600	/* faking support to XHCI */
+#define USB_PORT_STAT_SPEED_MASK	\
+	(USB_PORT_STAT_LOW_SPEED | USB_PORT_STAT_HIGH_SPEED)
+
+/*
+ * Changes to wPortStatus bit field in USB 3.0
+ * See USB 3.0 spec Table 10-10
+ */
+#define USB_SS_PORT_STAT_LINK_STATE	0x01e0
+#define USB_SS_PORT_STAT_POWER		0x0200
+#define USB_SS_PORT_STAT_SPEED		0x1c00
+#define USB_SS_PORT_STAT_SPEED_5GBPS	0x0000
+/* Bits that are the same from USB 2.0 */
+#define USB_SS_PORT_STAT_MASK		(USB_PORT_STAT_CONNECTION | \
+					 USB_PORT_STAT_ENABLE | \
+					 USB_PORT_STAT_OVERCURRENT | \
+					 USB_PORT_STAT_RESET)
 
 /* wPortChange bits */
 #define USB_PORT_STAT_C_CONNECTION  0x0001
@@ -225,10 +302,19 @@
 #define USB_PORT_STAT_C_OVERCURRENT 0x0008
 #define USB_PORT_STAT_C_RESET       0x0010
 
+/*
+ * Changes to wPortChange bit fields in USB 3.0
+ * See USB 3.0 spec Table 10-12
+ */
+#define USB_SS_PORT_STAT_C_BH_RESET	0x0020
+#define USB_SS_PORT_STAT_C_LINK_STATE	0x0040
+#define USB_SS_PORT_STAT_C_CONFIG_ERROR	0x0080
+
 /* wHubCharacteristics (masks) */
 #define HUB_CHAR_LPSM               0x0003
 #define HUB_CHAR_COMPOUND           0x0004
 #define HUB_CHAR_OCPM               0x0018
+#define HUB_CHAR_TTTT               0x0060 /* TT Think Time mask */
 
 /*
  *Hub Status & Hub Change bit masks
@@ -238,5 +324,64 @@
 
 #define HUB_CHANGE_LOCAL_POWER	0x0001
 #define HUB_CHANGE_OVERCURRENT	0x0002
+
+/* Mask for wIndex in get/set port feature */
+#define USB_HUB_PORT_MASK	0xf
+
+/* Hub class request codes */
+#define USB_REQ_SET_HUB_DEPTH	0x0c
+
+/*
+ * As of USB 2.0, full/low speed devices are segregated into trees.
+ * One type grows from USB 1.1 host controllers (OHCI, UHCI etc).
+ * The other type grows from high speed hubs when they connect to
+ * full/low speed devices using "Transaction Translators" (TTs).
+ */
+struct usb_tt {
+	int		multi;		/* bool, true means one TT per port */
+	unsigned	think_time;	/* think time in ns */
+};
+
+/*
+ * CBI style
+ */
+
+#define US_CBI_ADSC		0
+
+/* Command Block Wrapper */
+struct umass_bbb_cbw {
+	unsigned int		dCBWSignature;
+#	define CBWSIGNATURE	0x43425355
+	unsigned int		dCBWTag;
+	unsigned int		dCBWDataTransferLength;
+	unsigned char		bCBWFlags;
+#	define CBWFLAGS_OUT	0x00
+#	define CBWFLAGS_IN	0x80
+#	define CBWFLAGS_SBZ	0x7f
+	unsigned char		bCBWLUN;
+	unsigned char		bCDBLength;
+#	define CBWCDBLENGTH	16
+	unsigned char		CBWCDB[CBWCDBLENGTH];
+};
+#define UMASS_BBB_CBW_SIZE	31
+
+/* Command Status Wrapper */
+struct umass_bbb_csw {
+	unsigned int		dCSWSignature;
+#	define CSWSIGNATURE	0x53425355
+	unsigned int		dCSWTag;
+	unsigned int		dCSWDataResidue;
+	unsigned char		bCSWStatus;
+#	define CSWSTATUS_GOOD	0x0
+#	define CSWSTATUS_FAILED 0x1
+#	define CSWSTATUS_PHASE	0x2
+};
+#define UMASS_BBB_CSW_SIZE	13
+
+/*
+ * BULK only
+ */
+#define US_BBB_RESET		0xff
+#define US_BBB_GET_MAX_LUN	0xfe
 
 #endif /*_USB_DEFS_H_ */

@@ -208,6 +208,16 @@ ahci_cdrom*  	at ahci?
 ohci*   	at pci? dev ? function ?	# OHCI
 usb*      	at ohci?
 
+##lxhci0    	at localbus0 base 0xbfe38000	# xHCI
+pcixhci*    	at pci? dev ? function ?
+xhci*		at pcixhci?
+usb*		at xhci?
+#usbnet*      	at xhci?
+select 	 	mod_usb_xhci
+
+#pcinvme*	at pci? dev ? function ?
+#nvme*		at pcinvme?
+
 #### SCSI support
 #siop*		at pci? dev ? function ?	# Symbios/NCR 53c...
 #scsibus*	at siop?

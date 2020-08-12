@@ -23,6 +23,10 @@ file	Targets/LS2K/dev/load_dtb.c		cmd_dtb
 file	Targets/LS2K/dev/signal_test.c
 file    Targets/LS2K/dev/slt.c
 
+#XHCI
+device lxhci  : xhcibus
+attach lxhci at localbus
+
 # OHCI
 #device	lohci {[channel = -1]} :usbbus
 #attach	lohci at localbus

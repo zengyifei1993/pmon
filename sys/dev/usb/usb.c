@@ -85,7 +85,7 @@
 #include "usb.h"
 
 #undef USB_DEBUG
-#define USB_DEBUG
+//#define USB_DEBUG
 
 #ifdef	USB_DEBUG
 #define	USB_PRINTF(fmt,args...)	printf (fmt ,##args)
@@ -107,6 +107,7 @@ static struct devrequest setup_packet;
 
 struct hostcontroller host_controller;
 SLIST_HEAD(usbdriver_list, usb_driver) usbdrivers= SLIST_HEAD_INITIALIZER(usbdrivers);
+static int hub_port_need_rescan;
 
 /**********************************************************************
  * some forward declerations...
@@ -1201,6 +1202,7 @@ int usb_new_device(struct usb_device *dev)
 	int addr, err;
 	int tmp;
 	unsigned char tmpbuf[USB_BUFSIZ];
+	struct usb_hc *hc = dev->hc_private;
 
 	dev->descriptor.bMaxPacketSize0 = 8;  /* Start off at 8 bytes  */
 	dev->maxpacketsize = 0;		/* Default to 8 byte max packet size */
@@ -1210,6 +1212,9 @@ int usb_new_device(struct usb_device *dev)
 	/* We still haven't set the Address yet */
 	addr = dev->devnum;
 	dev->devnum = 0;
+
+	if (hc->uop->alloc_device)
+		hc->uop->alloc_device(dev);
 
 #undef NEW_INIT_SEQ
 #ifdef NEW_INIT_SEQ
@@ -1262,12 +1267,25 @@ int usb_new_device(struct usb_device *dev)
 		}
 	}
 #else
+
+	if (dev->speed == USB_SPEED_LOW) {
+		dev->descriptor.bMaxPacketSize0 = 8;
+		dev->maxpacketsize = PACKET_SIZE_8;
+	} else {
+		dev->descriptor.bMaxPacketSize0 = 64;
+		dev->maxpacketsize = PACKET_SIZE_64;
+	}
+	dev->epmaxpacketin[0] = dev->descriptor.bMaxPacketSize0;
+	dev->epmaxpacketout[0] = dev->descriptor.bMaxPacketSize0;
+
+	if (strncmp(hc->self.dv_xname,"xhci", 4)) {
 	/* and this is the old and known way of initializing devices */
 	err = usb_get_descriptor(dev, USB_DT_DEVICE, 0, &dev->descriptor, 8);
 	if (err < 8) {
 		printf("\n      USB device not responding, giving up (status=%lX)\n",dev->status);
 		return 1;
 	}
+      }
 #endif
 	dev->epmaxpacketin [0] = dev->descriptor.bMaxPacketSize0;
 	dev->epmaxpacketout[0] = dev->descriptor.bMaxPacketSize0;
@@ -1278,21 +1296,11 @@ int usb_new_device(struct usb_device *dev)
 		case 64: dev->maxpacketsize = 3; break;
 	}
 	dev->devnum = addr;
-#ifdef USB_DEBUG
-	//printf(" bLength = %x\n", ((struct usb_device_descriptor *)CACHED_TO_UNCACHED(&dev->descriptor))->bLength);
-	printf(" bLength = %x\n", dev->descriptor.bLength);
-	printf(" bDescriptorType =%x\n", dev->descriptor.bDescriptorType);
-	printf(" bcdUSB = %#4x\n", dev->descriptor.bcdUSB);
-	printf(" bDeviceClass =%x\n", dev->descriptor.bDeviceClass);
-	printf(" bDeviceSubClass =%x\n", dev->descriptor.bDeviceSubClass);
-	printf(" bDeviceProtocol =%x\n", dev->descriptor.bDeviceProtocol);
-	printf(" bMaxPacketSize0 =%x\n", dev->descriptor.bMaxPacketSize0);
-#endif
 
 	err = usb_set_address(dev); /* set address */
 
 	if (err < 0) {
-		printf("\n      USB device not accepting new address (error=%lX)\n", dev->status);
+		printf("\n      USB device not accepting new address (error=%lX), maybe change dev->slow(current %d)\n", dev->status, dev->slow);
 		return 1;
 	}
 
@@ -1778,6 +1786,7 @@ void usb_hub_port_connect_change(struct usb_device *dev, int port)
 	/* Reset the port */
 	if (hub_port_reset(dev, port, &portstatus) < 0) {
 		printf("cannot reset port %i!?\n", port + 1);
+		hub_port_need_rescan = 1;
 		return;
 	}
 
@@ -1786,13 +1795,35 @@ void usb_hub_port_connect_change(struct usb_device *dev, int port)
 	/* Allocate a new device struct for it */
 	assert(dev->hc_private!=NULL);
 	usb=usb_alloc_new_device(dev->hc_private);
-	usb->slow = (portstatus & USB_PORT_STAT_LOW_SPEED) ? 1 : 0;
+
+#if 0
+	if (hub_is_wusb(hub))
+		udev->speed = USB_SPEED_WIRELESS;
+	else if (hub_is_superspeedplus(hub->hdev) &&
+		 port_speed_is_ssp(hub->hdev, ext_portstatus &
+				   USB_EXT_PORT_STAT_RX_SPEED_ID))
+		udev->speed = USB_SPEED_SUPER_PLUS;
+	else if (hub_is_superspeed(dev))
+		usb->speed = USB_PORT_STAT_SUPER_SPEED;
+	else
+#endif
+	if ((portstatus & USB_PORT_STAT_SUPER_SPEED) == USB_PORT_STAT_SUPER_SPEED)
+		usb->speed = USB_SPEED_SUPER;
+	else if (portstatus & USB_PORT_STAT_HIGH_SPEED)
+		usb->speed = USB_SPEED_HIGH;
+	else if (portstatus & USB_PORT_STAT_LOW_SPEED)
+		usb->speed = USB_SPEED_LOW;
+	else
+		usb->speed = USB_SPEED_FULL;
+
+	usb->slow = usb->speed;
 
 	dev->children[port] = usb;
 	usb->parent=dev;
 
 	/* hack to rename usb device*/
 	usb->port = port;
+	usb->portnr = port + 1;
 	/* Run it through the hoops (find a driver, etc) */
 	if (usb_new_device(usb)) {
 		/* Woops, disable the port */
@@ -1918,6 +1949,8 @@ int usb_hub_configure(struct usb_device *dev)
 	USB_HUB_PRINTF("%sover-current condition exists\n",
 		(swap_16(hubsts->wHubStatus) & HUB_STATUS_OVERCURRENT) ? "" : "no ");
 	usb_hub_power_on(hub);
+	do {
+	hub_port_need_rescan = 0;
 	for (i = 0; i < dev->maxchild; i++) {
 		struct usb_port_status portsts;
 		unsigned short portstatus, portchange;
@@ -1965,6 +1998,7 @@ int usb_hub_configure(struct usb_device *dev)
 			usb_clear_port_feature(dev, i + 1, USB_PORT_FEAT_C_RESET);
 		}
 	} /* end for i all ports */
+	} while (hub_port_need_rescan);
 
 	return 0;
 }

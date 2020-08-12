@@ -127,6 +127,9 @@ attach ohci at pci
 
 #file sys/dev/pci/usb-ohci.c		ohci
 
+device pcixhci: xhcibus
+attach pcixhci at pci
+
 #added by jlliu
 device  rtk: ether, ifnet
 attach  rtk at pci

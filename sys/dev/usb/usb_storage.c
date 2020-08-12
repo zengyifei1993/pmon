@@ -115,9 +115,9 @@ extern void dev_print(block_dev_desc_t *);
 #define US_BBB_RESET		0xff
 #define US_BBB_GET_MAX_LUN	0xfe
 
-typedef unsigned int __u32;
-typedef unsigned short __u16;
-typedef unsigned char __u8;
+//typedef unsigned int __u32;
+//typedef unsigned short __u16;
+//typedef unsigned char __u8;
 typedef unsigned char uchar;
 
 /* Command Block Wrapper */

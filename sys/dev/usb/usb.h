@@ -39,6 +39,8 @@
 #include <sys/queue.h>
 #include <sys/device.h>
 #include "usb_defs.h"
+#include <byteorder.h>
+#include <unaligned.h>
 
 /* Everything is aribtrary */
 #define USB_ALTSETTINGALLOC		4
@@ -54,10 +56,19 @@
 #define USB_CNTL_TIMEOUT 100 /* 100ms timeout */
 
 enum usb_device_speed {
-	USB_SPEED_UNKNOWN = 0,          /* enumerating */
-	USB_SPEED_LOW, USB_SPEED_FULL,      /* usb 1.1 */
-	USB_SPEED_HIGH,             /* usb 2.0 */
-	USB_SPEED_VARIABLE,         /* wireless (usb 2.5) */
+	USB_SPEED_UNKNOWN = 0,			/* enumerating */
+	USB_SPEED_LOW, USB_SPEED_FULL,		/* usb 1.1 */
+	USB_SPEED_HIGH,				/* usb 2.0 */
+	USB_SPEED_WIRELESS,			/* wireless (usb 2.5) */
+	USB_SPEED_SUPER,			/* usb 3.0 */
+};
+
+enum {
+	/* Maximum packet size; encoded as 0,1,2,3 = 8,16,32,64 */
+	PACKET_SIZE_8   = 0,
+	PACKET_SIZE_16  = 1,
+	PACKET_SIZE_32  = 2,
+	PACKET_SIZE_64  = 3,
 };
 
 #define BW_HOST_DELAY   1000L       /* nanoseconds */
@@ -108,6 +119,15 @@ struct usb_device_descriptor {
 } __attribute__ ((packed));
 
 
+struct _usb_endpoint_descriptor {
+	unsigned char  bLength;
+	unsigned char  bDescriptorType;
+	unsigned char  bEndpointAddress;
+	unsigned char  bmAttributes;
+	unsigned short wMaxPacketSize;
+	unsigned char  bInterval;
+} __attribute__ ((packed));
+
 /* Endpoint descriptor */
 struct usb_endpoint_descriptor {
 	unsigned char  bLength;
@@ -120,6 +140,29 @@ struct usb_endpoint_descriptor {
 	unsigned char  bSynchAddress;
 
 } __attribute__ ((packed));
+
+/* USB_DT_SS_ENDPOINT_COMP: SuperSpeed Endpoint Companion descriptor */
+struct usb_ss_ep_comp_descriptor {
+	unsigned char  bLength;
+	unsigned char  bDescriptorType;
+
+	unsigned char  bMaxBurst;
+	unsigned char  bmAttributes;
+	unsigned short wBytesPerInterval;
+} __attribute__ ((packed));
+
+struct _usb_interface_descriptor {
+	unsigned char  bLength;
+	unsigned char  bDescriptorType;
+	unsigned char  bInterfaceNumber;
+	unsigned char  bAlternateSetting;
+	unsigned char  bNumEndpoints;
+	unsigned char  bInterfaceClass;
+	unsigned char  bInterfaceSubClass;
+	unsigned char  bInterfaceProtocol;
+	unsigned char  iInterface;
+} __attribute__ ((packed));
+
 /* Interface descriptor */
 struct usb_interface_descriptor {
 	unsigned char  bLength;
@@ -133,10 +176,27 @@ struct usb_interface_descriptor {
 	unsigned char  iInterface;
 
 	unsigned char  no_of_ep;
+	unsigned char  num_altsetting;
 	unsigned char  act_altsetting;
 	struct usb_endpoint_descriptor ep_desc[USB_MAXENDPOINTS];
+	/*
+	 * Super Speed Device will have Super Speed Endpoint
+	 * Companion Descriptor  (section 9.6.7 of usb 3.0 spec)
+	 * Revision 1.0 June 6th 2011
+	 */
+	struct usb_ss_ep_comp_descriptor ss_ep_comp_desc[USB_MAXENDPOINTS];
 } __attribute__ ((packed));
 
+struct _usb_config_descriptor {
+	unsigned char  bLength;
+	unsigned char  bDescriptorType;
+	unsigned short wTotalLength;
+	unsigned char  bNumInterfaces;
+	unsigned char  bConfigurationValue;
+	unsigned char  iConfiguration;
+	unsigned char  bmAttributes;
+	unsigned char  MaxPower;
+} __attribute__ ((packed));
 
 /* Configuration descriptor information.. */
 struct usb_config_descriptor {
@@ -153,9 +213,248 @@ struct usb_config_descriptor {
 	struct usb_interface_descriptor if_desc[USB_MAXINTERFACES];
 } __attribute__ ((packed));
 
+#define USB_DT_SS_EP_COMP_SIZE		6
+
+/* Bits 4:0 of bmAttributes if this is a bulk endpoint */
+static inline int
+usb_ss_max_streams(const struct usb_ss_ep_comp_descriptor *comp)
+{
+	int		max_streams;
+
+	if (!comp)
+		return 0;
+
+	max_streams = comp->bmAttributes & 0x1f;
+
+	if (!max_streams)
+		return 0;
+
+	max_streams = 1 << max_streams;
+
+	return max_streams;
+}
+
+/* Bits 1:0 of bmAttributes if this is an isoc endpoint */
+#define USB_SS_MULT(p)			(1 + ((p) & 0x3))
+
+/*-------------------------------------------------------------------------*/
+
+/**
+ * usb_endpoint_num - get the endpoint's number
+ * @epd: endpoint to be checked
+ *
+ * Returns @epd's number: 0 to 15.
+ */
+static inline int usb_endpoint_num(const struct usb_endpoint_descriptor *epd)
+{
+	return epd->bEndpointAddress & USB_ENDPOINT_NUMBER_MASK;
+}
+
+/**
+ * usb_endpoint_type - get the endpoint's transfer type
+ * @epd: endpoint to be checked
+ *
+ * Returns one of USB_ENDPOINT_XFER_{CONTROL, ISOC, BULK, INT} according
+ * to @epd's transfer type.
+ */
+static inline int usb_endpoint_type(const struct usb_endpoint_descriptor *epd)
+{
+	return epd->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK;
+}
+
+/**
+ * usb_endpoint_dir_in - check if the endpoint has IN direction
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint is of type IN, otherwise it returns false.
+ */
+static inline int usb_endpoint_dir_in(const struct usb_endpoint_descriptor *epd)
+{
+	return ((epd->bEndpointAddress & USB_ENDPOINT_DIR_MASK) == USB_DIR_IN);
+}
+
+/**
+ * usb_endpoint_dir_out - check if the endpoint has OUT direction
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint is of type OUT, otherwise it returns false.
+ */
+static inline int usb_endpoint_dir_out(
+				const struct usb_endpoint_descriptor *epd)
+{
+	return ((epd->bEndpointAddress & USB_ENDPOINT_DIR_MASK) == USB_DIR_OUT);
+}
+
+/**
+ * usb_endpoint_xfer_bulk - check if the endpoint has bulk transfer type
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint is of type bulk, otherwise it returns false.
+ */
+static inline int usb_endpoint_xfer_bulk(
+				const struct usb_endpoint_descriptor *epd)
+{
+	return ((epd->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		USB_ENDPOINT_XFER_BULK);
+}
+
+/**
+ * usb_endpoint_xfer_control - check if the endpoint has control transfer type
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint is of type control, otherwise it returns false.
+ */
+static inline int usb_endpoint_xfer_control(
+				const struct usb_endpoint_descriptor *epd)
+{
+	return ((epd->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		USB_ENDPOINT_XFER_CONTROL);
+}
+
+/**
+ * usb_endpoint_xfer_int - check if the endpoint has interrupt transfer type
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint is of type interrupt, otherwise it returns
+ * false.
+ */
+static inline int usb_endpoint_xfer_int(
+				const struct usb_endpoint_descriptor *epd)
+{
+	return ((epd->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		USB_ENDPOINT_XFER_INT);
+}
+
+/**
+ * usb_endpoint_xfer_isoc - check if the endpoint has isochronous transfer type
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint is of type isochronous, otherwise it returns
+ * false.
+ */
+static inline int usb_endpoint_xfer_isoc(
+				const struct usb_endpoint_descriptor *epd)
+{
+	return ((epd->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		USB_ENDPOINT_XFER_ISOC);
+}
+
+/**
+ * usb_endpoint_is_bulk_in - check if the endpoint is bulk IN
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint has bulk transfer type and IN direction,
+ * otherwise it returns false.
+ */
+static inline int usb_endpoint_is_bulk_in(
+				const struct usb_endpoint_descriptor *epd)
+{
+	return usb_endpoint_xfer_bulk(epd) && usb_endpoint_dir_in(epd);
+}
+
+/**
+ * usb_endpoint_is_bulk_out - check if the endpoint is bulk OUT
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint has bulk transfer type and OUT direction,
+ * otherwise it returns false.
+ */
+static inline int usb_endpoint_is_bulk_out(
+				const struct usb_endpoint_descriptor *epd)
+{
+	return usb_endpoint_xfer_bulk(epd) && usb_endpoint_dir_out(epd);
+}
+
+/**
+ * usb_endpoint_is_int_in - check if the endpoint is interrupt IN
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint has interrupt transfer type and IN direction,
+ * otherwise it returns false.
+ */
+static inline int usb_endpoint_is_int_in(
+				const struct usb_endpoint_descriptor *epd)
+{
+	return usb_endpoint_xfer_int(epd) && usb_endpoint_dir_in(epd);
+}
+
+/**
+ * usb_endpoint_is_int_out - check if the endpoint is interrupt OUT
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint has interrupt transfer type and OUT direction,
+ * otherwise it returns false.
+ */
+static inline int usb_endpoint_is_int_out(
+				const struct usb_endpoint_descriptor *epd)
+{
+	return usb_endpoint_xfer_int(epd) && usb_endpoint_dir_out(epd);
+}
+
+/**
+ * usb_endpoint_is_isoc_in - check if the endpoint is isochronous IN
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint has isochronous transfer type and IN direction,
+ * otherwise it returns false.
+ */
+static inline int usb_endpoint_is_isoc_in(
+				const struct usb_endpoint_descriptor *epd)
+{
+	return usb_endpoint_xfer_isoc(epd) && usb_endpoint_dir_in(epd);
+}
+
+/**
+ * usb_endpoint_is_isoc_out - check if the endpoint is isochronous OUT
+ * @epd: endpoint to be checked
+ *
+ * Returns true if the endpoint has isochronous transfer type and OUT direction,
+ * otherwise it returns false.
+ */
+static inline int usb_endpoint_is_isoc_out(
+				const struct usb_endpoint_descriptor *epd)
+{
+	return usb_endpoint_xfer_isoc(epd) && usb_endpoint_dir_out(epd);
+}
+
+/**
+ * usb_endpoint_maxp - get endpoint's max packet size
+ * @epd: endpoint to be checked
+ *
+ * Returns @epd's max packet
+ */
+static inline int usb_endpoint_maxp(const struct usb_endpoint_descriptor *epd)
+{
+	return __le16_to_cpu(get_unaligned(&epd->wMaxPacketSize));
+}
+
+/**
+ * usb_endpoint_maxp_mult - get endpoint's transactional opportunities
+ * @epd: endpoint to be checked
+ *
+ * Return @epd's wMaxPacketSize[12:11] + 1
+ */
+static inline int
+usb_endpoint_maxp_mult(const struct usb_endpoint_descriptor *epd)
+{
+	int maxp = __le16_to_cpu(epd->wMaxPacketSize);
+
+	return USB_EP_MAXP_MULT(maxp) + 1;
+}
+
+static inline int usb_endpoint_interrupt_type(
+		const struct usb_endpoint_descriptor *epd)
+{
+	return epd->bmAttributes & USB_ENDPOINT_INTRTYPE;
+}
+
+/*-------------------------------------------------------------------------*/
+
+
 
 struct usb_device {
 	int devnum;			/* Device number on USB bus */
+	int	speed;			/* full/low/high */
 	int slow;			/* Slow device? */
 	char mf[32];			/* manufacturer */
 	char prod[32];			/* product */
@@ -195,6 +494,9 @@ struct usb_device {
 
 	/* Rename support*/
 	int port;
+	int portnr;
+	/* slot_id - for xHCI enabled devices */
+	unsigned int slot_id;
 };
 
 struct usb_driver{
@@ -203,6 +505,16 @@ struct usb_driver{
 };
 
 TAILQ_HEAD(hostcontroller, usb_hc);
+/*
+ * You can initialize platform's USB host or device
+ * ports by passing this enum as an argument to
+ * board_usb_init().
+ */
+enum usb_init_type {
+	USB_INIT_HOST,
+	USB_INIT_DEVICE
+};
+
 /**********************************************************************
  * this is how the lowlevel part communicate with the outer world
  */
@@ -386,6 +698,26 @@ int usb_new_device(struct usb_device *dev);
 #define usb_pipecontrol(pipe)	(usb_pipetype((pipe)) == PIPE_CONTROL)
 #define usb_pipebulk(pipe)	(usb_pipetype((pipe)) == PIPE_BULK)
 
+#define usb_pipe_ep_index(pipe)	\
+		usb_pipecontrol(pipe) ? (usb_pipeendpoint(pipe) * 2) : \
+				((usb_pipeendpoint(pipe) * 2) - \
+				 (usb_pipein(pipe) ? 0 : 1))
+/*
+ *  * Hub Device descriptor
+ *   * USB Hub class device protocols
+ *    */
+
+#define USB_HUB_PR_FS           0 /* Full speed hub */
+#define USB_HUB_PR_HS_NO_TT     0 /* Hi-speed hub without TT */
+#define USB_HUB_PR_HS_SINGLE_TT 1 /* Hi-speed hub with single TT */
+#define USB_HUB_PR_HS_MULTI_TT  2 /* Hi-speed hub with multiple TT */
+#define USB_HUB_PR_SS           3 /* Super speed hub */
+
+static inline int hub_is_superspeed(struct usb_device *hdev)
+{
+	return hdev->descriptor.bDeviceProtocol == USB_HUB_PR_SS;
+}
+
 
 /*************************************************************************
  * Hub Stuff
@@ -427,6 +759,7 @@ struct usb_ops {
 					int transfer_len, struct devrequest *setup);
 	int (*submit_int_msg)(struct usb_device *dev, unsigned long pipe, void *buffer,
 					        int transfer_len, int interval);
+	int (*alloc_device)(struct usb_device *dev);
 };
 
 struct usb_hc {

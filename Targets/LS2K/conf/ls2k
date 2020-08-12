@@ -175,10 +175,20 @@ ahci*		at pci? dev ? function ?
 ahci_sd*  	at ahci?
 ahci_cdrom*  	at ahci?
 
+#pcinvme*	at pci? dev ? function ?
+#nvme*		at pcinvme?
+
 ohci*   	at pci? dev ? function ?	# OHCI
 usb*      	at ohci?
 #lehci*   	at pci? dev ? function ?	# EHCI
 #usb*      	at lehci?
+
+#lxhci0    	at localbus0 base 0xbfe38000	# xHCI
+#xhci0		at lxhci0
+#pcixhci0    	at pci? dev ? function ?
+#xhci0		at pcixhci0
+#usb*		at xhci0
+#select 	 	mod_usb_xhci
 
 #lohci0    	at localbus0 base 0xbfe38000	# OHCI
 #usb*      	at lohci0
