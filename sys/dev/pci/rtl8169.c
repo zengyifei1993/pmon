@@ -246,7 +246,6 @@ static const int multicast_filter_limit = 32;
 static int if_in_attach;
 static int if_frequency;
 
-typedef unsigned long long u64;
 
 struct TxDesc {
 	u32 opts1;

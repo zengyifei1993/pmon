@@ -38,13 +38,13 @@
 #undef _KERNEL
 #endif
 #include <sys/ioctl.h>
+#include <linux/types.h>
 
 #include <pmon.h>
 
 int cmd_memtst __P((int, char *[]));
 int cmd_spacescan __P((int, char *[]));
 static int do_mt __P((u_int32_t *, u_int32_t *, int));
-#define u64 unsigned long long
 extern u64 __raw__readq(u64 addr);
 extern u64 __raw__writeq(u64 addr, u64 val);
 

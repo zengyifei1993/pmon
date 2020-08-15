@@ -42,6 +42,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <dev/pci/pcivar.h>
+#include <linux/types.h>
 
 #include <autoconf.h>
 #include <pmon.h>
@@ -1656,7 +1657,6 @@ void ls_pcie_interrupt_fixup(void)
 }
 
 #define LOONGSON_HT1_INT_TRANS_ADDR 0x90000efdfb000270ULL
-typedef unsigned long long u64;
 u64  __raw__readq(u64 addr);
 u64 __raw__writeq(u64 addr, u64 val);
 void loongson_ht_trans_init(void)
