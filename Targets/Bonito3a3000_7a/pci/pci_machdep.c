@@ -264,6 +264,5 @@ pci_sync_cache(p, adr, size, rw)
 	size_t size;
 	int rw;
 {
-	CPU_IOFlushDCache(adr, size, rw);
 }
 
