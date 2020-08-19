@@ -33,6 +33,7 @@
 #include <linux/bitops.h>
 #include <autoconf.h>
 #include <dev/pci/pcivar.h>
+#include <machine/intr.h>
 
 typedef struct xhci {
 	struct usb_hc hc;
@@ -44,6 +45,7 @@ typedef struct xhci {
 	unsigned long cpu_membase;  //for cpu access	
 	pci_chipset_tag_t sc_pc;    /* chipset handle needed by mips */
 	struct usb_device *rdev;
+	unsigned int intmask;
 } xhci_t;
 
 #ifndef CONFIG_USB_MAX_CONTROLLER_COUNT
@@ -1283,6 +1285,111 @@ int xhci_submit_int_msg(struct usb_device *udev, unsigned long pipe, void *buffe
 				    nonblock);
 }
 
+struct int_urb_info {
+struct usb_device *udev;
+unsigned long pipe;
+void *buffer;
+int length;
+int interval;
+unsigned int time;
+};
+
+int xhci_interrupt(struct int_urb_info *urb)
+{
+	static int busy;
+	struct usb_device *udev;
+	int interval, pipe, ed_num, length, ret; 
+	int (*irq_handle)(struct usb_device *dev);
+	void *buffer;
+	if (busy) return 0;
+	udev = urb->udev;
+	pipe = urb->pipe;
+	ed_num = usb_pipeendpoint(pipe) |(usb_pipecontrol(pipe) ? 0: (usb_pipeout(pipe)<<4));
+	if (udev->irq_handle_ep[ed_num])
+		irq_handle = udev->irq_handle_ep[ed_num];
+	else if (udev->irq_handle)
+		irq_handle = udev->irq_handle;
+	else return 0;
+	interval = urb->interval;
+	if (get_timer(urb->time) < max(10, interval))
+		return 0;
+	busy = 1;
+	buffer = urb->buffer;
+	length = urb->length;
+	if (usb_pipetype(pipe) == PIPE_INTERRUPT)
+		ret = xhci_submit_int_msg(udev, pipe, buffer, length, interval, 0);
+	else
+		ret = xhci_submit_bulk_msg(udev, pipe, buffer, length);
+	if (ret >= 0) {
+		udev->irq_act_len = udev->act_len;
+		irq_handle(udev);
+		udev->irq_act_len = 0;
+	}
+	urb->time = get_timer(0);
+	busy = 0;
+	return 0;
+}
+
+int op_xhci_submit_bulk_msg(struct usb_device *udev, unsigned long pipe, void *buffer,
+		    int length)
+{
+	int ret;
+	int ed_num = usb_pipeendpoint(pipe) |(usb_pipecontrol(pipe) ? 0: (usb_pipeout(pipe)<<4));
+	ret = _xhci_submit_bulk_msg(udev, pipe, buffer, length);
+	if (ret >= 0 && udev->irq_handle_ep[ed_num]) {
+		struct xhci *xhci = udev->hc_private;
+		struct int_urb_info *urb;
+		udev->irq_handle_ep[ed_num](udev);
+
+		if (xhci->intmask & (1 << ed_num))
+			return ret;
+
+		xhci->intmask |= (1 << ed_num);
+		urb = malloc(sizeof(*urb));
+		urb->udev = udev;
+		urb->pipe = pipe;
+		urb->buffer = buffer;
+		urb->length = length;	
+		urb->interval = 100;
+		urb->time = get_timer(0);
+		tgt_poll_register(IPL_BIO, xhci_interrupt, urb);
+	}
+	return ret;
+}
+
+int op_xhci_submit_int_msg(struct usb_device *udev, unsigned long pipe, void *buffer,
+		   int length, int interval, bool nonblock)
+{
+	int ret;
+	int ed_num = usb_pipeendpoint(pipe) |(usb_pipecontrol(pipe) ? 0: (usb_pipeout(pipe)<<4));
+	ret = xhci_submit_int_msg(udev, pipe, buffer, length, interval,
+			nonblock);
+	if (udev->irq_handle || udev->irq_handle_ep[ed_num]) {
+		struct xhci *xhci = udev->hc_private;
+		struct int_urb_info *urb;
+		if (ret >= 0) {
+			if (udev->irq_handle_ep[ed_num]) 
+				udev->irq_handle_ep[ed_num](udev);
+			else
+				udev->irq_handle(udev);
+		} 
+
+		if (xhci->intmask & (1 << ed_num))
+			return ret;
+
+		xhci->intmask |= (1 << ed_num);
+		urb = malloc(sizeof(*urb));
+		urb->udev = udev;
+		urb->pipe = pipe;
+		urb->buffer = buffer;
+		urb->length = length;	
+		urb->interval = interval;
+		urb->time = get_timer(0);
+		tgt_poll_register(IPL_BIO, xhci_interrupt, urb);
+	}
+	return ret;
+}
+
 /**
  * Intialises the XHCI host controller
  * and allocates the necessary data structures
@@ -1327,9 +1434,9 @@ int xhci_usb_lowlevel_stop(struct xhci *xhci)
 
 
 struct usb_ops xhci_usb_op = {
-	.submit_bulk_msg	= 	xhci_submit_bulk_msg,
+	.submit_bulk_msg	= 	op_xhci_submit_bulk_msg,
 	.submit_control_msg	= 	xhci_submit_control_msg,
-	.submit_int_msg		= 	xhci_submit_int_msg,
+	.submit_int_msg		= 	op_xhci_submit_int_msg,
 	.alloc_device = xhci_usb_alloc_device,
 };
 
@@ -1357,6 +1464,7 @@ static void xhci_attach(struct device *parent, struct device *self, void *aux)
 
 	/*do the enumeration of  the USB devices attached to the USB HUB(here root hub)
 	   ports. */
+
 	usb_new_device(xhci->rdev);
 }
 
