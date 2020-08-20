@@ -515,12 +515,17 @@ static int xhci_set_configuration(struct usb_device *udev)
 	unsigned int max_burst;
 	unsigned int avg_trb_len;
 	unsigned int err_count = 0;
+	int infno = 0;
+	
+	if (udev->descriptor.idVendor == 0x525 && udev->descriptor.idProduct == 0xa4a2) 
+		infno = 1;
+	else if (udev->descriptor.idVendor == 0x0fe6 && udev->descriptor.idProduct == 0x9900)
+		infno = 1;
 
 	out_ctx = virt_dev->out_ctx;
 	in_ctx = virt_dev->in_ctx;
-
-	num_of_ep = udev->config.if_desc[0].no_of_ep;
-	ifdesc = &udev->config.if_desc[0];
+	num_of_ep = udev->config.if_desc[infno].no_of_ep;
+	ifdesc = &udev->config.if_desc[infno];
 
 	ctrl_ctx = xhci_get_input_control_ctx(in_ctx);
 	/* Initialize the input context control */
