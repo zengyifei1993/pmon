@@ -1259,6 +1259,24 @@ static int xhci_lowlevel_stop(struct xhci_ctrl *ctrl)
 	return 0;
 }
 
+extern struct cfdata cfdata[];
+int usb_xhci_stop()
+{
+	int i, j;
+	struct xhci *xhci;
+	for(i=0;cfdata[i].cf_driver;i++)
+	{
+		if(strcmp(cfdata[i].cf_driver->cd_name,"xhci") == 0) {
+			for (j=0; j<cfdata[i].cf_unit;j++) {
+				xhci = cfdata[i].cf_driver->cd_devs[j];
+				xhci_lowlevel_stop(&xhci->xhcic);
+			}
+			break;
+		}
+	}
+	return 0;
+}
+
 int xhci_submit_control_msg(struct usb_device *udev, unsigned long pipe,
 		       void *buffer, int length, struct devrequest *setup)
 {

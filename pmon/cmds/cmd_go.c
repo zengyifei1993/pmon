@@ -52,6 +52,7 @@
 #include "mod_debugger.h"
 #include "mod_usb_uhci.h"
 #include "mod_usb_ohci.h"
+#include "mod_usb_xhci.h"
 #include "initrd.h"
 
 extern struct trapframe DBGREG;
@@ -92,6 +93,9 @@ void  __attribute__((weak))cfg_coherent(int ac, char* av[])
 extern void usb_uhci_stop(void);
 #endif
 #if NMOD_USB_OHCI !=0
+extern void usb_ohci_stop(void);
+#endif
+#if NMOD_USB_XHCI !=0
 extern void usb_ohci_stop(void);
 #endif
 /*************************************************************
@@ -182,6 +186,9 @@ extern char	*optarg;
 #endif
 #if NMOD_USB_OHCI !=0
 	usb_ohci_stop();
+#endif
+#if NMOD_USB_XHCI !=0
+	usb_xhci_stop();
 #endif
 #if defined (LOONGSON_3A2H) || defined (LS7A)
 	gmac_stop();
