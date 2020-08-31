@@ -21,6 +21,7 @@
 #define LS7A_RTC_MATCH2_REG                             (LS7A_RTC_REG_BASE + 0x0074)
 
 #define LS7A_ACPI_REG_BASE                              (LS7A_MISC_BASE + 0x50000)
+#define LS7A_ACPI_PMCON_RTC_REG                         (LS7A_ACPI_REG_BASE + 0x8)
 #define LS7A_ACPI_PM1_STS_REG                           (LS7A_ACPI_REG_BASE + 0xc)
 #define LS7A_ACPI_PM1_CNT_REG                           (LS7A_ACPI_REG_BASE + 0x14)
 #define LS7A_ACPI_RST_CNT_REG                           (LS7A_ACPI_REG_BASE + 0x30)

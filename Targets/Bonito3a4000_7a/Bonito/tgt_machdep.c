@@ -288,6 +288,7 @@ void initmips(unsigned int raw_memsz)
 	 *  Probe clock frequencys so delays will work properly.
 	 */
 	ls7a_pwm(0, 10000);
+	init_acpi();
 	tgt_cpufreq();
 	SBD_DISPLAY("DONE",0);
 	/*
@@ -664,11 +665,20 @@ static void ls7a_pwm(int x,int y)
 	readl(LS7A_PWM3_CTRL) |= 1;
 }
 
+static void init_acpi(void)
+{
+	if (ls7a_version ()) {
+		do {
+			readl(LS7A_ACPI_PMCON_RTC_REG) |= (0x3 << 9);
+		} while (((readl(LS7A_ACPI_PMCON_RTC_REG) >> 9) & 0x3) != 0x3);
+	}
+}
+
 static void init_legacy_rtc(void)
 {
 	int year, month, date, hour, min, sec, val;
-	val = (1 << 13) | (1 << 11) | (1 << 8);
-	
+	val = (1 << 11) | (1 << 8);
+
 	outl(LS7A_RTC_CTRL_REG, val);
 	outl(LS7A_TOY_TRIM_REG, 0);
 	outl(LS7A_RTC_TRIM_REG, 0);
@@ -677,10 +687,10 @@ static void init_legacy_rtc(void)
 
 	year = inl(LS7A_TOY_READ1_REG);
 	month = (val >> 26) & 0x3f;
-	date = (val >> 21) & 0x1f; 
-	hour = (val >> 16) & 0x1f; 
-	min = (val >> 10) & 0x3f; 
-	sec = (val >> 4) & 0x3f; 
+	date = (val >> 21) & 0x1f;
+	hour = (val >> 16) & 0x1f;
+	min = (val >> 10) & 0x3f;
+	sec = (val >> 4) & 0x3f;
 	if ((year < 0 || year > 138)
 		|| (month < 1 || month > 12)
 		|| (date < 1 || date > 31)
