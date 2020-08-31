@@ -136,6 +136,14 @@
     TTYDBG("LS7A pll configure done.\r\n")
 #endif
 
+    //init 7a hardware
+#if 1   //configure to not obey strict HT order
+    lw      t1, 0x414(t0)
+    li      t2, (0x7ffff << 0)
+    or      t1, t1, t2
+    sw      t1, 0x414(t0)
+#endif
+
     //rewrite pci header default value
     or      a2, $0, 0x0100
     dli     t1, 0x0
