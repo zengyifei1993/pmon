@@ -149,6 +149,7 @@ void ad_err1(unsigned long *adr1, unsigned long *adr2, unsigned long good, unsig
 void mv_error(unsigned long *adr, unsigned long good, unsigned long bad);
 
 static void init_legacy_rtc(void);
+static void init_acpi(void);
 
 #ifdef INTERFACE_3A780E
 #define REV_ROW_LINE 560
