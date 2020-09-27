@@ -27,7 +27,7 @@ ATTENTION:
 #define DDR_LOOPC  (DDR_FREQ*DDR_REFC*DDR_DIV*DDR_DIV_L2/100)
 
 #ifndef CORE_FREQ
-/* CPU @ 800Mhz */
+/* CPU @ 1000Mhz */
 #define CORE_FREQ   800
 #endif
 
