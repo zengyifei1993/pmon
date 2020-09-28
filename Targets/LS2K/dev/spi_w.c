@@ -42,6 +42,8 @@ void spi_initw()
 void spi_initr()
 {
   	SET_SPI(PARAM, 0x47);             //espr:0100
+	delay(1000);
+	delay(1000);
 }
 
 
