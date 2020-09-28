@@ -221,6 +221,33 @@
 			interrupt-parent = <&icu>;
 			interrupts = <8>;
 		};
+		/*pengjie add ----------------->*/
+
+		  serial3@0x1fe00300{
+		   device_type = "serial";
+		   compatible = "ns16550";
+		   reg = <0x1fe00300 0x100>;
+		   clock-frequency = <125000000>;
+		   interrupt-parent = <&icu>;
+		   interrupts = <8>;
+		  };
+		  serial4@0x1fe00400{
+		   device_type = "serial";
+		   compatible = "ns16550";
+		   reg = <0x1fe00400 0x100>;
+		   clock-frequency = <125000000>;
+		   interrupt-parent = <&icu>;
+		   interrupts = <9>;
+		  };
+		  serial5@0x1fe00500{
+		   device_type = "serial";
+		   compatible = "ns16550";
+		   reg = <0x1fe00500 0x100>;
+		   clock-frequency = <125000000>;
+		   interrupt-parent = <&icu>;
+		   interrupts = <9>;
+		  };
+		/*pengjie add <----------------------*/
 
 		pioA:gpio@0x1fe10500{
 			compatible = "ls,ls2k-gpio", "ls,ls-gpio";

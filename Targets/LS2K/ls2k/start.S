@@ -1034,6 +1034,15 @@ cp0_main:
 	sd	a0, 0x50(t0)
 #endif
 
+//disable uart 3 4 5
+	li t0,0xbfe10420
+	lw t2,0x8(t0)
+	li	t1,0xf000
+	not	t1,t1
+	and	t2,t2,t1
+	ori t2,0x21e 
+	sw t2,0x8(t0)
+
 start_now:
 
 	PRINTSTR("\r\nPMON2000 MIPS Initializing. Standby...\r\n")
@@ -1124,7 +1133,7 @@ start_now:
     dli     s1, 0xff100004  //set use MC1 or MC0 or MC1/0 and give All device id
 #else
 	//dli     s1, 0xc2e30400c2e30404
-	dli     s1, 0xc1a10404
+	dli     s1, 0xc1a18404
 #endif
 #include "ddr_dir/loongson3_ddr2_config.S"
 
