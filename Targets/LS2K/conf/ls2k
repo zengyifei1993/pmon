@@ -281,5 +281,5 @@ option HPET_RTC
 
 
 select		mod_framebuffer
-option		FB_XSIZE=800
-option		FB_YSIZE=480
+option		FB_XSIZE=1280
+option		FB_YSIZE=1024
