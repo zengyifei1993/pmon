@@ -510,8 +510,15 @@ void tgt_reboot()//mtf
 	init_legacy_rtc();
 	ls2k_rtc_wakeup_reboot(LS2K_RTC_WAKEUP_REBOOT);
 #else
-	*(volatile unsigned int *)0xbfe07030 = 1;
+	//*(volatile unsigned int *)0xbfe07030 = 1;
 #endif
+	
+	unsigned int tmp=0;
+	*(volatile unsigned int *)0xbfe07030 = 1;
+	*(volatile unsigned int *)0xbfe10500 = 0xfffffff7;
+	tmp = *(volatile unsigned int *)0xbfe10510;
+	tmp |= 0x8;
+	*(volatile unsigned int *)0xbfe10510= tmp; //gpio3 write high
 }
 
 void tgt_poweroff()//mtf
