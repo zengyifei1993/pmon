@@ -120,7 +120,7 @@ option		NOPCINAMES		# Save some space for x86emu
 
 select		mod_framebuffer
 select		mod_vesa
-option 		CONFIG_VIDEO_16BPP
+option 		CONFIG_VIDEO_32BPP
 #option 	CONFIG_VIDEO_8BPP_INDEX
 
 #
@@ -253,7 +253,7 @@ select 		iso9660
 option		IDECD 
 select		cmd_testfire
 #option		HAVE_NB_SERIAL
-#option		USE_ENVMAC
+option		USE_ENVMAC
 #option		LOOKLIKE_PC
 #select		cmd_lwdhcp
 #select		cmd_bootp
@@ -281,5 +281,5 @@ option HPET_RTC
 
 
 select		mod_framebuffer
-option		FB_XSIZE=1280
-option		FB_YSIZE=1024
+option		FB_XSIZE=800
+option		FB_YSIZE=480

@@ -177,7 +177,7 @@ enum {
 #define DMA_RD_STU_SHIF		4		/* dma read data status */
 #define DMA_WR_STU_SHIF		8		/* dma write data status */
 
-#define NAND_USE_CS	2
+#define NAND_USE_CS	0
 
 /* DMA Descripter */
 struct ls2k_nand_dma_desc {
