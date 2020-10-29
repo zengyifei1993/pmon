@@ -595,8 +595,7 @@ void delay_usb_ohci(int us)
 *===========================================================================*/
 static void ohci_attach(struct device *parent, struct device *self, void *aux)
 {
-	return;
-#if 0
+
 	struct ohci *ohci = (struct ohci *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	static int ohci_dev_index = 0;
@@ -731,7 +730,6 @@ SM502_HC:
 	/*do the enumeration of  the USB devices attached to the USB HUB(here root hub)
 	   ports. */
 	usb_new_device(ohci->rdev);
-#endif
 
 }
 
