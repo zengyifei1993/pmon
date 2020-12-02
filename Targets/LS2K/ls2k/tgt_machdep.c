@@ -283,7 +283,14 @@ static void init_pcidev(void)
 #endif
 	*(volatile unsigned int *)0xbfe10428 &= ~(1<<19); /*disable usb prefetch*/
 	val = *(unsigned int *)0xbfe10420;
-	*(unsigned int *)0xbfe10420 = (val | 0xc000);//mtf, enable I2C1
+	*(unsigned int *)0xbfe10420 = (val | 0x13ff48);//mtf, enable I2C1
+
+	*(volatile unsigned int *)0xbfe10428 &= ~(1<<19); /*disable usb prefetch*/
+#if 0
+	*(volatile unsigned int *)0xbfe10428 |= 0x3EE0;
+	val = *(unsigned int *)0xbfe10430;
+	*(unsigned int *)0xbfe10430 = (val & 0xfffffffd);//dev0
+#endif
 
 	_pci_devinit(1);	/* PCI device initialization */
 #if (NMOD_X86EMU_INT10 > 0)||(NMOD_X86EMU >0)
@@ -298,10 +305,10 @@ static void init_pcidev(void)
 			printf("begin fb_init\n");
 			fbaddress = dc_init();
 			printf("dc_init done\n");
-			//this parameters for 1280*1024 VGA
-			ScreenLineLength = 2560;
+			//this parameters for 1024*768 VGA
+			ScreenLineLength = 2048;
 			ScreenDepth = 15;
-			ScreenHeight = 1024;
+			ScreenHeight = 768;
 		} else {
 			fbaddress  = _pci_conf_read(pcie_dev->pa.pa_tag,0x10);
 			fbaddress = fbaddress &0xffffff00; //laster 8 bit

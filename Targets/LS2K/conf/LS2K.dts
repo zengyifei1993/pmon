@@ -60,12 +60,12 @@
 		 * If you want to use the "hda" function,enable the "hda"
 		 * controller by configure general configuration register 0.
 		 */
-		/*hda@0x400d0000 {
+		hda@0x400d0000 {
 			compatible = "loongson,ls-audio";
 			reg = <0x400d0000 0xffff>;
 			interrupt-parent = <&icu>;
 			interrupts = <12>;
-		};*/
+		};
 
 		dc@0x400c0000 {
 			compatible = "loongson,ls-fb";
@@ -222,31 +222,96 @@
 			interrupts = <8>;
 		};
 		/*pengjie add ----------------->*/
-
-		  serial3@0x1fe00300{
-		   device_type = "serial";
-		   compatible = "ns16550";
-		   reg = <0x1fe00300 0x100>;
-		   clock-frequency = <125000000>;
-		   interrupt-parent = <&icu>;
-		   interrupts = <8>;
+		  serial1@0x1fe00300{
+			   device_type = "serial";
+			   compatible = "ns16550";
+			   reg = <0x1fe00300 0x100>;
+			   clock-frequency = <125000000>;
+			   interrupt-parent = <&icu>;
+			   interrupts = <8>;
 		  };
+		  serial2@0x1fe00400{
+			   device_type = "serial";
+			   compatible = "ns16550";
+			   reg = <0x1fe00400 0x100>;
+			   clock-frequency = <125000000>;
+			   interrupt-parent = <&icu>;
+			   interrupts = <8>;
+		  };
+		  serial3@0x1fe00500{
+			   device_type = "serial";
+			   compatible = "ns16550";
+			   reg = <0x1fe00500 0x100>;
+			   clock-frequency = <125000000>;
+			   interrupt-parent = <&icu>;
+			   interrupts = <8>;
+		  };
+#if 0
 		  serial4@0x1fe00400{
-		   device_type = "serial";
-		   compatible = "ns16550";
-		   reg = <0x1fe00400 0x100>;
-		   clock-frequency = <125000000>;
-		   interrupt-parent = <&icu>;
-		   interrupts = <9>;
+			   device_type = "serial";
+			   compatible = "ns16550";
+			   reg = <0x1fe00400 0x100>;
+			   clock-frequency = <125000000>;
+			   interrupt-parent = <&icu>;
+			   interrupts = <9>;
 		  };
 		  serial5@0x1fe00500{
-		   device_type = "serial";
-		   compatible = "ns16550";
-		   reg = <0x1fe00500 0x100>;
-		   clock-frequency = <125000000>;
-		   interrupt-parent = <&icu>;
-		   interrupts = <9>;
+			   device_type = "serial";
+			   compatible = "ns16550";
+			   reg = <0x1fe00500 0x100>;
+			   clock-frequency = <125000000>;
+			   interrupt-parent = <&icu>;
+			   interrupts = <9>;
 		  };
+		  serial6@0x1fe00600{
+			   device_type = "serial";
+			   compatible = "ns16550";
+			   reg = <0x1fe00600 0x100>;
+			   clock-frequency = <125000000>;
+			   interrupt-parent = <&icu>;
+			   interrupts = <9>;
+		  };
+		  serial7@0x1fe00700{
+			   device_type = "serial";
+			   compatible = "ns16550";
+			   reg = <0x1fe00700 0x100>;
+			   clock-frequency = <125000000>;
+			   interrupt-parent = <&icu>;
+			   interrupts = <9>;
+		  };
+		  serial8@0x1fe00800{
+			   device_type = "serial";
+			   compatible = "ns16550";
+			   reg = <0x1fe00800 0x100>;
+			   clock-frequency = <125000000>;
+			   interrupt-parent = <&icu>;
+			   interrupts = <0xa>;
+		  };
+		  serial9@0x1fe00900{
+			   device_type = "serial";
+			   compatible = "ns16550";
+			   reg = <0x1fe00900 0x100>;
+			   clock-frequency = <125000000>;
+			   interrupt-parent = <&icu>;
+			   interrupts = <0xa>;
+		  };
+		  seriala@0x1fe00a00{
+			   device_type = "serial";
+			   compatible = "ns16550";
+			   reg = <0x1fe00a00 0x100>;
+			   clock-frequency = <125000000>;
+			   interrupt-parent = <&icu>;
+			   interrupts = <0xa>;
+		  };
+		  serialb@0x1fe00b00{
+			   device_type = "serial";
+			   compatible = "ns16550";
+			   reg = <0x1fe00b00 0x100>;
+			   clock-frequency = <125000000>;
+			   interrupt-parent = <&icu>;
+			   interrupts = <0xa>;
+		  };
+#endif
 		/*pengjie add <----------------------*/
 
 		pioA:gpio@0x1fe10500{
@@ -341,7 +406,7 @@
 		 * If you want to use the "can" function,enable the "can"
 		 * controller by configure general configuration register 0.
 		 */
-		/*can0: can@1fe00c00{
+		can0: can@1fe00c00{
 			compatible = "nxp,sja1000";
 			reg = <0x1fe00c00 0xff>;
 			nxp,external-clock-frequency = <125000000>;
@@ -354,7 +419,7 @@
 			nxp,external-clock-frequency = <125000000>;
 			interrupt-parent = <&icu>;
 			interrupts = <25>;
-		};*/
+		};
 
 		pwm0: pwm@1fe02000{
 			compatible = "loongson,ls2k-pwm";
