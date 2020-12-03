@@ -120,7 +120,7 @@ option		NOPCINAMES		# Save some space for x86emu
 
 select		mod_framebuffer
 select		mod_vesa
-option 		CONFIG_VIDEO_32BPP
+option 		CONFIG_VIDEO_16BPP
 #option 	CONFIG_VIDEO_8BPP_INDEX
 
 #
@@ -235,8 +235,8 @@ pciide* 	at pci ? dev ? function ? flags 0x0000
 #### IDE hard drives
 wd*		at pciide? channel ? drive ? flags 0x0000
 
-#sdcard0		at localbus0 flags 0
-
+sdcard0		at localbus0 flags 0
+select loopdev
 select	sdio
 
 #### Pseudo devices
