@@ -218,6 +218,7 @@ int mac_read(unsigned char data_addr, unsigned char *buf, int count)
 	i = ls2k_eeprom_read_seq(data_addr, buf, count);
 
 	if (!i) {
+#if 0
 		printf("get random MAC address: ");
 		generate_mac_val(buf);
 
@@ -226,13 +227,16 @@ int mac_read(unsigned char data_addr, unsigned char *buf, int count)
 		printf("\n");
 
 		return i;
+#endif
+		printf("can't read mac address, use macaddress in the dts\n!!!");
+		return 0;
 	}
 
 	if (!is_valid_ether_addr_linux(buf)){
-		printf("Mac is invalid, now get a random mac\n");
-		generate_mac_val(buf);
+		printf("Mac is invalid, use macaddress in the dts\n");
+		return 0;
 	}
-	return i;
+	return 1;
 }
 
 int mac_write(unsigned char data_addr, unsigned char *buf, int count)

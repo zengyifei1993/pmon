@@ -35,7 +35,7 @@ static int check_mac_ok(void)
 {
 	const void *nodep;	/* property node pointer */
 	int  nodeoffset;	/* node offset from libfdt */
-	int  len, id, i;		/* length of the property */
+	int  len, id, i,j;		/* length of the property */
 	u8 mac_addr[6] = {0x00, 0x55, 0x7B, 0xB5, 0x7D, 0xF7};	//default mac address
 	char ethernet_name[2][25]={"/soc/ethernet@0x40040000", "/soc/ethernet@0x40050000"};
 
@@ -61,8 +61,9 @@ static int check_mac_ok(void)
 		}
 #else
 		i2c_init();//configure the i2c freq
-		mac_read(id * 6, mac_addr, 6);
+		j = mac_read(id * 6, mac_addr, 6);
 #endif
+#if 0
 		for(i = 0;i < 6;i++) {
 			if(mac_addr[i] != (*((char *)nodep + i) & 0xff)) {
 				printf("mac_eeprom[%d]=0x%x; mac_dtb[%d]=0x%x; reset mac addr in dtb\n", \
@@ -70,7 +71,22 @@ static int check_mac_ok(void)
 				return 0;
 			}
 		}
+#endif
+		if(!j){
+			return 1;
+			}else{
+				for(i = 0;i < 6;i++) {
+			if(mac_addr[i] != (*((char *)nodep + i) & 0xff)) {
+				printf("mac_eeprom[%d]=0x%x; mac_dtb[%d]=0x%x; reset mac addr in dtb\n", \
+						i, mac_addr[i], i, *((char *)nodep + i) & 0xff);
+				return 0;
+			}
+		}
+				
 	}
+
+		
+   }
 	return 1;
 }
 
