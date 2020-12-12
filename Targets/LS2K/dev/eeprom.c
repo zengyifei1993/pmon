@@ -12,7 +12,7 @@
 
 #include "generate_mac_val.c"
 
-#define	CAT24C16_ADDR	0xae
+#define	CAT24C16_ADDR	0xa0
 
 #define PRER_LO_REG	0x0
 #define PRER_HI_REG	0x1
