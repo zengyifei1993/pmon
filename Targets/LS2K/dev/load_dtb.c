@@ -52,8 +52,11 @@ static int check_mac_ok(void)
 #ifdef USE_ENVMAC
 		if (USE_ENVMAC)
 		{
+			if(id == 0)
 			tgt_ethaddr(mac_addr);
-			mac_addr[0] += id;
+			//mac_addr[0] += id;
+			else
+			tgt_ethaddr1(mac_addr);
 		}
 		else
 		{

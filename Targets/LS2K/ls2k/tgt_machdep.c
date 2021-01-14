@@ -183,6 +183,7 @@ extern unsigned long long memorysize_high;
 extern char MipsException[], MipsExceptionEnd[];
 
 unsigned char hwethadr[6];
+unsigned char hwethadr1[6];
 
 void initmips(unsigned long long  raw_memsz);
 
@@ -1238,6 +1239,12 @@ void tgt_mapenv(int (*func) __P((char *, char *)))
 		hwethadr[2], hwethadr[3], hwethadr[4], hwethadr[5]);
 	(*func) ("ethaddr", env);
 
+	bcopy(&nvram[ETHER1_OFFS], hwethadr1, 6);
+	sprintf(env, "%02x:%02x:%02x:%02x:%02x:%02x", hwethadr1[0], hwethadr1[1],
+		hwethadr1[2], hwethadr1[3], hwethadr1[4], hwethadr1[5]);
+	(*func) ("ethaddr1", env);
+
+
 #ifndef NVRAM_IN_FLASH
 	free(nvram);
 #endif
@@ -1605,7 +1612,17 @@ int tgt_setenv(char *name, char *value)
 		printf("set em_enable to com %d\n", em_enable);
 	} else
 #endif
-	if (strcmp("ethaddr", name) == 0) {
+	//if (strcmp("ethaddr", name) == 0) {
+        if (strcmp("ethaddr1", name) == 0) {
+               char *s = value;
+               int i;
+               int32_t v;
+               for(i = 0; i < 6; i++) {
+               gethex(&v, s, 2);
+               hwethadr1[i] = v;
+               s += 3;         /* Don't get to fancy here :-) */
+               }
+       }else if (strcmp("ethaddr", name) == 0) {
 		char *s = value;
 		int i;
 		int32_t v;
@@ -1665,6 +1682,7 @@ int tgt_setenv(char *name, char *value)
 	bcopy(&em_enable, &nvrambuf[MASTER_BRIDGE_OFFS], 1);
 #endif
 	bcopy(hwethadr, &nvramsecbuf[ETHER_OFFS], 6);
+      bcopy(hwethadr1, &nvramsecbuf[ETHER1_OFFS], 6);
 #ifdef NVRAM_IN_FLASH
 
 #ifdef BOOT_FROM_NAND

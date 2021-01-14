@@ -33,6 +33,7 @@
 #include "synopGMAC_network_interface.h"
 #include "synopGMAC_Dev.h"
 #if	(!defined(LOONGSON_2G5536))&&(!defined(LOONGSON_2G1A))&&(!defined(LOONGSON_2F1A))
+
 #include "target/eeprom.h"
 #endif
 
@@ -2617,7 +2618,8 @@ void setup_tx_desc(synopGMACdevice * gmacdev)
 }
 #endif
 
-#if	defined(LOONGSON_2G5536)||defined(LOONGSON_2G1A) || defined(LOONGSON_2F1A)
+//#if	defined(LOONGSON_2G5536)||defined(LOONGSON_2G1A) || defined(LOONGSON_2F1A)
+#if	defined(LOONGSON_2G5536)||defined(LOONGSON_2G1A) || defined(LOONGSON_2F1A) || defined (USE_ENVMAC)
 void parseenv(int index, u8 * buf)
 {
 	int i;
@@ -2702,6 +2704,8 @@ s32  synopGMAC_init_network_interface(char* xname,u64 synopGMACMappedAddr)
 		parseenv(1, mac_addr0);
 #endif
 #elif defined(LOONGSON_2K) || defined(LS7A)
+synopGMACdevice *cmdgmacdev[2];
+static int maxgmac = 0;
 s32  synopGMAC_init_network_interface(char* xname, u64 synopGMACMappedAddr)
 {
 	struct ifnet* ifp;
@@ -2728,8 +2732,12 @@ s32  synopGMAC_init_network_interface(char* xname, u64 synopGMACMappedAddr)
 	else if(gmac_num == 1)
 		memcpy(mac_addr0,mac_read_spi_buf + 16,6);
 #else
+#if defined(USE_ENVMAC)
+	parseenv(i, mac_addr0);
+#else
 	i2c_init();//configure the i2c freq
 	mac_read(eeprom_addr, mac_addr0, 6);
+#endif
 #endif
 
 	memcpy(smbios_uuid_mac, mac_addr0, 6);
@@ -2779,6 +2787,9 @@ s32  synopGMAC_init_network_interface(char* xname, struct device *sc )
 			(u64) synopGMACMappedAddr + MACBASE,
 			(u64) synopGMACMappedAddr + DMABASE,	
 			DEFAULT_PHY_BASE, mac_addr0);
+
+	cmdgmacdev[maxgmac++] = synopGMACadapter->synopGMACdev;
+
 #if SYNOP_TOP_DEBUG
 	dumpphyreg(synopGMACadapter);
 #endif

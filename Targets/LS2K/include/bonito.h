@@ -84,6 +84,8 @@ struct pci_config_data {
 #	define	NVRAM_OFFS		(0x100000 - FLASH_SECTOR_SIZE)
 #endif
 #	define ETHER_OFFS		494 	/* Ethernet address base */
+#	define ETHER_OFFS		488 	/* Ethernet address base */
+#	define ETHER1_OFFS	494 	/* Ethernet address base */
 #else	/* Use clock ram, 256 bytes only */
 #	define NVRAM_SIZE		114
 #	define NVRAM_SECSIZE		NVRAM_SIZE	/* Helper */

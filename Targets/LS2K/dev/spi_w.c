@@ -32,9 +32,11 @@
 int write_sr(char val);
 void spi_initw()
 { 
+	SET_SPI(PARAM, 0x10); 
   	SET_SPI(SPSR, 0xc0); 
-  	SET_SPI(PARAM, 0x40);             //espr:0100
+  	//SET_SPI(PARAM, 0x40);             //espr:0100
  	SET_SPI(SPER, 0x05); //spre:01 
+	SET_SPI(PARAM, 0x40); 
   	SET_SPI(PARAM2,0x01); 
   	SET_SPI(SPCR, 0x50);
 }
@@ -42,8 +44,8 @@ void spi_initw()
 void spi_initr()
 {
   	SET_SPI(PARAM, 0x47);             //espr:0100
-	delay(1000);
-	delay(1000);
+	delay(100);
+	delay(100);
 }
 
 
